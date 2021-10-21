@@ -15,6 +15,7 @@ import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -379,6 +380,22 @@ public class WholeProgramInferenceScenesStorage
         AnnotationConverter.annotationMirrorToAnnotation(anno);
 
     boolean isNewAnnotation = fieldAnnos.tlAnnotationsHere.add(sceneAnno);
+    return isNewAnnotation;
+  }
+
+  @Override
+  public boolean addClassDeclarationAnnotation(Element classElt, AnnotationMirror anno) {
+    if (!ElementUtils.isElementFromSourceCode(classElt)) {
+      return false;
+    }
+    String file = getFileForElement(classElt);
+    AClass classAnnos =
+        getClassAnnos(
+            ElementUtils.getBinaryName((TypeElement) classElt), file, (ClassSymbol) classElt);
+    scenelib.annotations.Annotation sceneAnno =
+        AnnotationConverter.annotationMirrorToAnnotation(anno);
+
+    boolean isNewAnnotation = classAnnos.tlAnnotationsHere.add(sceneAnno);
     return isNewAnnotation;
   }
 

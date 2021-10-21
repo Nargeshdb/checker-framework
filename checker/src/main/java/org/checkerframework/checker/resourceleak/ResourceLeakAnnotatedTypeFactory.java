@@ -39,6 +39,7 @@ import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.framework.flow.CFStore;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.GenericAnnotatedTypeFactory;
+import org.checkerframework.javacutil.AnnotationBuilder;
 import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.TreeUtils;
@@ -173,6 +174,32 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
   protected Set<Class<? extends Annotation>> createSupportedTypeQualifiers() {
     return getBundledTypeQualifiers(
         CalledMethods.class, CalledMethodsBottom.class, CalledMethodsPredicate.class);
+  }
+
+  @Override
+  public void postProcessClassTree(ClassTree tree) {
+    if ((getWholeProgramInference() != null) && classToFieldToFinalizers.containsKey(tree)) {
+      Set<FieldToFinalizers> fieldToFinalizersSet = classToFieldToFinalizers.get(tree);
+      if (!fieldToFinalizersSet.isEmpty()) {
+        Set<Element> intersection = fieldToFinalizersSet.iterator().next().finalizers;
+        for (FieldToFinalizers ftf : fieldToFinalizersSet) {
+          intersection.retainAll(ftf.finalizers);
+        }
+        if (!intersection.isEmpty() && intersection.size() == 1) {
+          AnnotationBuilder builder =
+              new AnnotationBuilder(this.getProcessingEnv(), MustCall.class);
+          String expression = intersection.iterator().next().getSimpleName().toString();
+          builder.setValue("value", new String[] {expression});
+          AnnotationMirror am = builder.build();
+          if (am != null) {
+            getWholeProgramInference()
+                .addClassDeclarationAnnotation(TreeUtils.elementFromDeclaration(tree), am);
+          }
+        }
+      }
+    }
+
+    super.postProcessClassTree(tree);
   }
 
   /**

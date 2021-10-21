@@ -591,6 +591,20 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
   }
 
   @Override
+  public void addClassDeclarationAnnotation(Element classElt, AnnotationMirror anno) {
+    // Do not infer types for library code, only for type-checked source code.
+    if (!ElementUtils.isElementFromSourceCode(classElt)) {
+      return;
+    }
+
+    String file = storage.getFileForElement(classElt);
+    boolean isNewAnnotation = storage.addClassDeclarationAnnotation(classElt, anno);
+    if (isNewAnnotation) {
+      storage.setFileModified(file);
+    }
+  }
+
+  @Override
   public void addFieldDeclarationAnnotation(Element field, AnnotationMirror anno) {
     if (!ElementUtils.isElementFromSourceCode(field)) {
       return;

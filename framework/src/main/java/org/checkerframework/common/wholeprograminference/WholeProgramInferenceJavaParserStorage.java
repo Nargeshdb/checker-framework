@@ -160,6 +160,15 @@ public class WholeProgramInferenceJavaParserStorage
     return fieldAnnos;
   }
 
+  private ClassOrInterfaceAnnos getClassAnnos(Element classElt) {
+    String path = ElementUtils.getSourceFilePath((TypeElement) classElt);
+    addSourceFile(path);
+    CompilationUnitAnnos sourceAnnos = sourceToAnnos.get(path);
+    ClassOrInterfaceAnnos classOrInterfaceAnnos =
+        sourceAnnos.types.get(ElementUtils.getBinaryName((TypeElement) classElt));
+    return classOrInterfaceAnnos;
+  }
+
   @Override
   public AnnotatedTypeMirror getParameterAnnotations(
       ExecutableElement methodElt,
@@ -280,6 +289,16 @@ public class WholeProgramInferenceJavaParserStorage
     boolean isNewAnnotation = fieldAnnos.addDeclarationAnnotation(anno);
     if (isNewAnnotation) {
       modifiedFiles.add(getFileForElement(field));
+    }
+    return isNewAnnotation;
+  }
+
+  @Override
+  public boolean addClassDeclarationAnnotation(Element classElt, AnnotationMirror anno) {
+    ClassOrInterfaceAnnos classOrInterfaceAnnos = getClassAnnos(classElt);
+    boolean isNewAnnotation = classOrInterfaceAnnos.addDeclarationAnnotation(anno);
+    if (isNewAnnotation) {
+      modifiedFiles.add(getFileForElement(classElt));
     }
     return isNewAnnotation;
   }
@@ -416,7 +435,7 @@ public class WholeProgramInferenceJavaParserStorage
           @Override
           public void processClass(
               ClassTree javacTree, ClassOrInterfaceDeclaration javaParserNode) {
-            addClass(javacTree);
+            addClassDeclaration(javacTree, javaParserNode);
           }
 
           @Override
@@ -436,6 +455,18 @@ public class WholeProgramInferenceJavaParserStorage
             }
           }
 
+          private void addClassDeclaration(
+              ClassTree tree, ClassOrInterfaceDeclaration javaParserNode) {
+            TypeElement classElt = TreeUtils.elementFromDeclaration(tree);
+            String className = ElementUtils.getBinaryName(classElt);
+            ClassOrInterfaceAnnos typeWrapper = new ClassOrInterfaceAnnos(javaParserNode);
+            if (!classToAnnos.containsKey(className)) {
+              classToAnnos.put(className, typeWrapper);
+            }
+
+            sourceAnnos.types.put(className, typeWrapper);
+          }
+
           /**
            * Creates a wrapper around the class for {@code tree} and stores it in {@code
            * sourceAnnos}.
@@ -450,7 +481,7 @@ public class WholeProgramInferenceJavaParserStorage
               classToAnnos.put(className, typeWrapper);
             }
 
-            sourceAnnos.types.add(typeWrapper);
+            sourceAnnos.types.put(className, typeWrapper);
           }
 
           @Override
@@ -562,7 +593,7 @@ public class WholeProgramInferenceJavaParserStorage
    * @param compilationUnitAnnos the compilation unit annotations to modify
    */
   public void prepareCompilationUnitForWriting(CompilationUnitAnnos compilationUnitAnnos) {
-    for (ClassOrInterfaceAnnos type : compilationUnitAnnos.types) {
+    for (ClassOrInterfaceAnnos type : compilationUnitAnnos.types.values()) {
       prepareClassForWriting(type);
     }
   }
@@ -712,7 +743,7 @@ public class WholeProgramInferenceJavaParserStorage
     /** Compilation unit being wrapped. */
     public CompilationUnit compilationUnit;
     /** Wrappers for classes and interfaces in {@code compilationUnit}. */
-    public List<ClassOrInterfaceAnnos> types;
+    public Map<String, ClassOrInterfaceAnnos> types = new HashMap<>();
 
     /**
      * Constructs a wrapper around the given compilation unit.
@@ -721,7 +752,6 @@ public class WholeProgramInferenceJavaParserStorage
      */
     public CompilationUnitAnnos(CompilationUnit compilationUnit) {
       this.compilationUnit = compilationUnit;
-      types = new ArrayList<>();
     }
 
     /**
@@ -738,7 +768,7 @@ public class WholeProgramInferenceJavaParserStorage
             "\"" + checker.getClass().getCanonicalName() + "\"");
       }
 
-      for (ClassOrInterfaceAnnos typeAnnos : types) {
+      for (ClassOrInterfaceAnnos typeAnnos : types.values()) {
         typeAnnos.transferAnnotations();
       }
     }
@@ -758,6 +788,7 @@ public class WholeProgramInferenceJavaParserStorage
    * Stores wrappers for the locations where annotations may be inferred in a class or interface.
    */
   private static class ClassOrInterfaceAnnos {
+    public ClassOrInterfaceDeclaration declaration;
     /**
      * Mapping from JVM method signatures to the wrapper containing the corresponding executable.
      */
@@ -767,6 +798,32 @@ public class WholeProgramInferenceJavaParserStorage
     /** Collection of declared enum constants (empty if not an enum). */
     public Set<String> enumConstants = new HashSet<>(2);
 
+    private @MonotonicNonNull Set<AnnotationMirror> declarationAnnotations = null;
+
+    public ClassOrInterfaceAnnos(ClassOrInterfaceDeclaration declaration) {
+      this.declaration = declaration;
+    }
+
+    public ClassOrInterfaceAnnos() {
+      declaration = null;
+    }
+
+    public boolean addDeclarationAnnotation(AnnotationMirror annotation) {
+      if (declarationAnnotations == null) {
+        declarationAnnotations = new HashSet<>();
+      }
+
+      return declarationAnnotations.add(annotation);
+    }
+
+    public Set<AnnotationMirror> getDeclarationAnnotations() {
+      if (declarationAnnotations == null) {
+        return Collections.emptySet();
+      }
+
+      return Collections.unmodifiableSet(declarationAnnotations);
+    }
+
     /**
      * Transfers all annotations inferred by whole program inference for the methods and fields in
      * the wrapper class or interface to their corresponding JavaParser locations.
@@ -774,6 +831,14 @@ public class WholeProgramInferenceJavaParserStorage
     public void transferAnnotations() {
       for (CallableDeclarationAnnos callableAnnos : callableDeclarations.values()) {
         callableAnnos.transferAnnotations();
+      }
+
+      if (declarationAnnotations != null) {
+        for (AnnotationMirror annotation : declarationAnnotations) {
+          declaration.addAnnotation(
+              AnnotationMirrorToAnnotationExprConversion.annotationMirrorToAnnotationExpr(
+                  annotation));
+        }
       }
 
       for (FieldAnnos field : fields.values()) {

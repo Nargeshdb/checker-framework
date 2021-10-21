@@ -2,7 +2,7 @@ import org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods;
 import org.checkerframework.checker.mustcall.qual.MustCall;
 import org.checkerframework.checker.mustcall.qual.Owning;
 
-@MustCall("finalizer") class CheckFields {
+class CheckFields {
   private final @Owning Foo checkFieldsFoo;
 
   public CheckFields() {
@@ -26,7 +26,7 @@ import org.checkerframework.checker.mustcall.qual.Owning;
     return new Foo();
   }
 
-  @MustCall("b") static class FooField {
+  static class FooField {
     private final @Owning Foo finalOwningFoo;
 
     public FooField() {
