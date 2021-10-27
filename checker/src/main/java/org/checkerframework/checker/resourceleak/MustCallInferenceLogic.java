@@ -1,5 +1,6 @@
 package org.checkerframework.checker.resourceleak;
 
+import com.sun.source.tree.MethodTree;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
@@ -10,10 +11,13 @@ import javax.lang.model.element.Element;
 import org.checkerframework.checker.mustcall.qual.Owning;
 import org.checkerframework.common.wholeprograminference.WholeProgramInference;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
+import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.dataflow.cfg.block.Block;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
+import org.checkerframework.dataflow.cfg.node.AssignmentNode;
 import org.checkerframework.dataflow.cfg.node.MethodInvocationNode;
 import org.checkerframework.dataflow.cfg.node.Node;
+import org.checkerframework.dataflow.util.NodeUtils;
 import org.checkerframework.javacutil.AnnotationBuilder;
 import org.checkerframework.javacutil.TreeUtils;
 
@@ -36,6 +40,8 @@ public class MustCallInferenceLogic {
   /** The control flow graph. */
   private ControlFlowGraph cfg;
 
+  private boolean isConstructor;
+
   /**
    * Creates a MustCallInferenceLogic. If the whole program inference is not null, the type
    * factory's postAnalyze method would instantiate a new MustCallInferenceLogic using this
@@ -48,6 +54,12 @@ public class MustCallInferenceLogic {
     this.typeFactory = typeFactory;
     this.cfg = cfg;
     OWNING = AnnotationBuilder.fromClass(this.typeFactory.getElementUtils(), Owning.class);
+    isConstructor =
+        ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST())
+            .getMethod()
+            .getName()
+            .toString()
+            .equals("<init>");
   }
 
   /**
@@ -68,6 +80,14 @@ public class MustCallInferenceLogic {
       for (Node node : current.getNodes()) {
         if (node instanceof MethodInvocationNode) {
           checksOwningFieldForInvocation((MethodInvocationNode) node);
+        } else if (isConstructor && node instanceof AssignmentNode) {
+          MethodTree method = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
+          AssignmentNode assignmentNode = (AssignmentNode) node;
+          Node lhs = assignmentNode.getTarget();
+          Element lhsElement = TreeUtils.elementFromTree(lhs.getTree());
+          Node rhs = NodeUtils.removeCasts(assignmentNode.getExpression());
+          if (lhsElement.getAnnotation(Owning.class) != null
+              && method.getParameters().contains(rhs.getTree())) {}
         }
       }
 

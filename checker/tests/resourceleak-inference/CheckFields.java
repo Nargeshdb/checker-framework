@@ -5,8 +5,8 @@ import org.checkerframework.checker.mustcall.qual.Owning;
 @MustCall("finalizer") class CheckFields {
   private final @Owning Foo checkFieldsFoo;
 
-  public CheckFields() {
-    this.checkFieldsFoo = new Foo();
+  public CheckFields(Foo f) {
+    this.checkFieldsFoo = f;
   }
 
   @EnsuresCalledMethods(
