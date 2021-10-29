@@ -285,6 +285,17 @@ public class WholeProgramInferenceJavaParserStorage
   }
 
   @Override
+  public boolean addDeclarationAnnotationToFormalParameter(
+      ExecutableElement methodElt, int index, AnnotationMirror anno) {
+    CallableDeclarationAnnos methodAnnos = getMethodAnnos(methodElt);
+    boolean isNewAnnotation = methodAnnos.addDeclarationAnnotationForParams(anno, index);
+    if (isNewAnnotation) {
+      modifiedFiles.add(getFileForElement(methodElt));
+    }
+    return isNewAnnotation;
+  }
+
+  @Override
   public AnnotatedTypeMirror atmFromStorageLocation(
       TypeMirror typeMirror, AnnotatedTypeMirror storageLocation) {
     return storageLocation;
@@ -818,6 +829,8 @@ public class WholeProgramInferenceJavaParserStorage
     /** Annotations on the callable declaration. */
     private @MonotonicNonNull Set<AnnotationMirror> declarationAnnotations = null;
 
+    private @MonotonicNonNull Set<Pair<Integer, AnnotationMirror>> paramsDeclAnnos = null;
+
     /**
      * Mapping from expression strings to pairs of (inferred precondition, declared type). The keys
      * are strings representing JavaExpressions, using the same format as a user would in an {@link
@@ -914,6 +927,21 @@ public class WholeProgramInferenceJavaParserStorage
       }
 
       return declarationAnnotations.add(annotation);
+    }
+
+    /**
+     * Adds a declaration annotation to this parameter and returns whether it was a new annotation.
+     *
+     * @param annotation declaration annotation to add
+     * @param index index of the parameter
+     * @return true if {@code annotation} wasn't previously stored for this parameter
+     */
+    public boolean addDeclarationAnnotationForParams(AnnotationMirror annotation, int index) {
+      if (paramsDeclAnnos == null) {
+        paramsDeclAnnos = new HashSet<>();
+      }
+
+      return paramsDeclAnnos.add(Pair.of(index, annotation));
     }
 
     /**
@@ -1053,6 +1081,15 @@ public class WholeProgramInferenceJavaParserStorage
           declaration.addAnnotation(
               AnnotationMirrorToAnnotationExprConversion.annotationMirrorToAnnotationExpr(
                   contractAnno));
+        }
+      }
+
+      if (paramsDeclAnnos != null) {
+        for (Pair<Integer, AnnotationMirror> pair : paramsDeclAnnos) {
+          Parameter param = declaration.getParameter(pair.first);
+          param.addAnnotation(
+              AnnotationMirrorToAnnotationExprConversion.annotationMirrorToAnnotationExpr(
+                  pair.second));
         }
       }
 

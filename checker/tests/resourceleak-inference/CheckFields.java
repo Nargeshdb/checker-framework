@@ -1,11 +1,12 @@
 import org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods;
 import org.checkerframework.checker.mustcall.qual.MustCall;
+import org.checkerframework.checker.mustcall.qual.MustCallAlias;
 import org.checkerframework.checker.mustcall.qual.Owning;
 
 @MustCall("finalizer") class CheckFields {
   private final @Owning Foo checkFieldsFoo;
 
-  public CheckFields(Foo f) {
+  public @MustCallAlias CheckFields(@MustCallAlias Foo f) {
     this.checkFieldsFoo = f;
   }
 

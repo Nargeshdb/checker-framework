@@ -1,6 +1,7 @@
 package org.checkerframework.checker.resourceleak;
 
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.VariableTree;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
@@ -8,6 +9,9 @@ import java.util.List;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.VariableElement;
+import org.checkerframework.checker.mustcall.qual.MustCallAlias;
 import org.checkerframework.checker.mustcall.qual.Owning;
 import org.checkerframework.common.wholeprograminference.WholeProgramInference;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
@@ -37,6 +41,8 @@ public class MustCallInferenceLogic {
   /** The @Owning annotation. */
   protected final AnnotationMirror OWNING;
 
+  protected final AnnotationMirror MUSTCALLALIAS;
+
   /** The control flow graph. */
   private ControlFlowGraph cfg;
 
@@ -54,6 +60,8 @@ public class MustCallInferenceLogic {
     this.typeFactory = typeFactory;
     this.cfg = cfg;
     OWNING = AnnotationBuilder.fromClass(this.typeFactory.getElementUtils(), Owning.class);
+    MUSTCALLALIAS =
+        AnnotationBuilder.fromClass(this.typeFactory.getElementUtils(), MustCallAlias.class);
     isConstructor =
         ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST())
             .getMethod()
@@ -85,9 +93,21 @@ public class MustCallInferenceLogic {
           AssignmentNode assignmentNode = (AssignmentNode) node;
           Node lhs = assignmentNode.getTarget();
           Element lhsElement = TreeUtils.elementFromTree(lhs.getTree());
-          Node rhs = NodeUtils.removeCasts(assignmentNode.getExpression());
-          if (lhsElement.getAnnotation(Owning.class) != null
-              && method.getParameters().contains(rhs.getTree())) {}
+          if (lhsElement.getAnnotation(Owning.class) != null) {
+            Node rhs = NodeUtils.removeCasts(assignmentNode.getExpression());
+            Element rhdElt = TreeUtils.elementFromTree(rhs.getTree());
+            List<? extends VariableTree> params = method.getParameters();
+            for (int i = 0; i < params.size(); i++) {
+              VariableElement paramElt = TreeUtils.elementFromDeclaration(params.get(i));
+              if (paramElt.equals(rhdElt)) {
+                ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
+                WholeProgramInference wpi = typeFactory.getWholeProgramInference();
+                wpi.addMethodDeclarationAnnotation(methodElt, MUSTCALLALIAS);
+                wpi.addDeclarationAnnotationToFormalParameter(methodElt, i, MUSTCALLALIAS);
+                break;
+              }
+            }
+          }
         }
       }
 
