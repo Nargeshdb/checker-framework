@@ -93,7 +93,7 @@ public class MustCallInferenceLogic {
           AssignmentNode assignmentNode = (AssignmentNode) node;
           Node lhs = assignmentNode.getTarget();
           Element lhsElement = TreeUtils.elementFromTree(lhs.getTree());
-          if (lhsElement.getAnnotation(Owning.class) != null) {
+          if (typeFactory.getDeclAnnotation(lhsElement, Owning.class) != null) {
             Node rhs = NodeUtils.removeCasts(assignmentNode.getExpression());
             Element rhdElt = TreeUtils.elementFromTree(rhs.getTree());
             List<? extends VariableTree> params = method.getParameters();
