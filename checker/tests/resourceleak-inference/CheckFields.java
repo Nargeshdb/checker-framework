@@ -3,7 +3,7 @@ import org.checkerframework.checker.mustcall.qual.MustCall;
 import org.checkerframework.checker.mustcall.qual.MustCallAlias;
 import org.checkerframework.checker.mustcall.qual.Owning;
 
-@MustCall("finalizer") class CheckFields {
+@MustCall("a") class CheckFields {
   private final @Owning Foo checkFieldsFoo;
 
   public @MustCallAlias CheckFields(@MustCallAlias Foo f) {
@@ -13,7 +13,7 @@ import org.checkerframework.checker.mustcall.qual.Owning;
   @EnsuresCalledMethods(
       value = {"this.checkFieldsFoo"},
       methods = {"a"})
-  void finalizer() {
+  void a() {
     this.checkFieldsFoo.a();
   }
 
@@ -27,24 +27,29 @@ import org.checkerframework.checker.mustcall.qual.Owning;
     return new Foo();
   }
 
-  @MustCall("b") static class FooField {
+  @MustCall("a") static class FooField {
     private final @Owning Foo finalOwningFoo;
 
-    public FooField() {
-      this.finalOwningFoo = new Foo();
+    public @MustCallAlias FooField(@MustCallAlias Foo f) {
+      this.finalOwningFoo = f;
+    }
+
+    public Foo ReturnAlias(Foo f) {
+      return f;
     }
 
     @EnsuresCalledMethods(
         value = {"this.finalOwningFoo"},
         methods = {"a"})
-    void b() {
+    void a() {
       this.finalOwningFoo.a();
       this.finalOwningFoo.c();
     }
   }
 
   void testField() {
-    FooField fooField = new FooField();
-    fooField.b();
+    Foo f = new Foo();
+    FooField fooField = new FooField(f);
+    fooField.a();
   }
 }

@@ -21,6 +21,7 @@ import org.checkerframework.dataflow.cfg.block.SpecialBlock;
 import org.checkerframework.dataflow.cfg.node.AssignmentNode;
 import org.checkerframework.dataflow.cfg.node.MethodInvocationNode;
 import org.checkerframework.dataflow.cfg.node.Node;
+import org.checkerframework.dataflow.cfg.node.ReturnNode;
 import org.checkerframework.dataflow.util.NodeUtils;
 import org.checkerframework.javacutil.AnnotationBuilder;
 import org.checkerframework.javacutil.TreeUtils;
@@ -63,11 +64,7 @@ public class MustCallInferenceLogic {
     MUSTCALLALIAS =
         AnnotationBuilder.fromClass(this.typeFactory.getElementUtils(), MustCallAlias.class);
     isConstructor =
-        ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST())
-            .getMethod()
-            .getName()
-            .toString()
-            .equals("<init>");
+        ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod().getName().equals("<init>");
   }
 
   /**
@@ -105,6 +102,22 @@ public class MustCallInferenceLogic {
                 wpi.addMethodDeclarationAnnotation(methodElt, MUSTCALLALIAS);
                 wpi.addDeclarationAnnotationToFormalParameter(methodElt, i, MUSTCALLALIAS);
                 break;
+              }
+            }
+          }
+        } else if (node instanceof ReturnNode) {
+          ReturnNode rNode = (ReturnNode) node;
+          MethodTree method = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
+          List<? extends VariableTree> params = method.getParameters();
+          if (rNode.getResult() != null) {
+            Element rElt = TreeUtils.elementFromTree(rNode.getResult().getTree());
+            for (int i = 0; i < params.size(); i++) {
+              VariableElement paramElt = TreeUtils.elementFromDeclaration(params.get(i));
+              if (rElt.equals(paramElt) && !typeFactory.getMustCallValue(rElt).isEmpty()) {
+                ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
+                WholeProgramInference wpi = typeFactory.getWholeProgramInference();
+                wpi.addMethodDeclarationAnnotation(methodElt, MUSTCALLALIAS);
+                wpi.addDeclarationAnnotationToFormalParameter(methodElt, i, MUSTCALLALIAS);
               }
             }
           }
