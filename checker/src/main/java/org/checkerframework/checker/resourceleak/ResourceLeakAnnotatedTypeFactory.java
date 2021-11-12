@@ -26,6 +26,7 @@ import org.checkerframework.checker.mustcall.qual.MustCallAlias;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
+import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.MethodInvocationNode;
 import org.checkerframework.dataflow.cfg.node.Node;
@@ -33,6 +34,7 @@ import org.checkerframework.framework.flow.CFStore;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.GenericAnnotatedTypeFactory;
 import org.checkerframework.javacutil.AnnotationUtils;
+import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.TreeUtils;
 
 /**
@@ -80,6 +82,18 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
     this.postInit();
   }
 
+  /**
+   * Is the given element a final field with non-empty @MustCall obligation?
+   *
+   * @param element a element
+   * @return true iff the given element is a final field with non-empty @MustCall obligation
+   */
+  boolean isPossibleOwningField(Element element) {
+    return (element.getKind().isField()
+        && ElementUtils.isFinal(element)
+        && !getMustCallValue(element).isEmpty());
+  }
+
   @Override
   protected Set<Class<? extends Annotation>> createSupportedTypeQualifiers() {
     return getBundledTypeQualifiers(
@@ -101,6 +115,15 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
     MustCallConsistencyAnalyzer mustCallConsistencyAnalyzer =
         new MustCallConsistencyAnalyzer(this, this.analysis);
     mustCallConsistencyAnalyzer.analyze(cfg);
+
+    // Inferring owning annotations for final owning fields
+    if (getWholeProgramInference() != null && cfg != null) {
+      if (cfg.getUnderlyingAST().getKind() == UnderlyingAST.Kind.METHOD) {
+        MustCallInferenceLogic mustCallInferenceLogic = new MustCallInferenceLogic(this, cfg);
+        mustCallInferenceLogic.runInference();
+      }
+    }
+
     super.postAnalyze(cfg);
     tempVarToTree.clear();
   }
