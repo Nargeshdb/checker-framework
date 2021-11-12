@@ -49,17 +49,24 @@ public class MustCallInferenceLogic {
 
   private boolean isConstructor;
 
+  private final MustCallConsistencyAnalyzer mccAnalyzer;
+
   /**
    * Creates a MustCallInferenceLogic. If the whole program inference is not null, the type
    * factory's postAnalyze method would instantiate a new MustCallInferenceLogic using this
    * constructor and then call {@link #inference()}.
    *
    * @param typeFactory the type factory
+   * @param mcca the MustCallConsistencyAnalyzer
    * @param cfg the ControlFlowGraph
    */
-  MustCallInferenceLogic(ResourceLeakAnnotatedTypeFactory typeFactory, ControlFlowGraph cfg) {
+  MustCallInferenceLogic(
+      ResourceLeakAnnotatedTypeFactory typeFactory,
+      MustCallConsistencyAnalyzer mcca,
+      ControlFlowGraph cfg) {
     this.typeFactory = typeFactory;
     this.cfg = cfg;
+    this.mccAnalyzer = mcca;
     OWNING = AnnotationBuilder.fromClass(this.typeFactory.getElementUtils(), Owning.class);
     MUSTCALLALIAS =
         AnnotationBuilder.fromClass(this.typeFactory.getElementUtils(), MustCallAlias.class);

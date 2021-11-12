@@ -119,7 +119,8 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
     // Inferring owning annotations for final owning fields
     if (getWholeProgramInference() != null && cfg != null) {
       if (cfg.getUnderlyingAST().getKind() == UnderlyingAST.Kind.METHOD) {
-        MustCallInferenceLogic mustCallInferenceLogic = new MustCallInferenceLogic(this, cfg);
+        MustCallInferenceLogic mustCallInferenceLogic =
+            new MustCallInferenceLogic(this, mustCallConsistencyAnalyzer, cfg);
         mustCallInferenceLogic.inference();
       }
     }
