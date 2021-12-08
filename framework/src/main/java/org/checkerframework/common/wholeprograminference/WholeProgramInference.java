@@ -194,6 +194,9 @@ public interface WholeProgramInference {
    */
   void addFieldDeclarationAnnotation(Element fieldElt, AnnotationMirror anno);
 
+  void addDeclarationAnnotationToFormalParameter(
+      ExecutableElement methodElt, int index, AnnotationMirror anno);
+
   /**
    * Writes the inferred results to a file. Ideally, it should be called at the end of the
    * type-checking process. In practice, it is called after each class, because we don't know which

@@ -146,6 +146,10 @@ public interface WholeProgramInferenceStorage<T> {
    *     otherwise
    */
   public boolean addFieldDeclarationAnnotation(Element fieldElt, AnnotationMirror anno);
+
+  boolean addDeclarationAnnotationToFormalParameter(
+      ExecutableElement methodElt, int index, AnnotationMirror anno);
+
   /**
    * Obtain the type from a storage location.
    *
