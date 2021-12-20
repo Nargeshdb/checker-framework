@@ -83,12 +83,13 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
   }
 
   /**
-   * Is the given element a final field with non-empty @MustCall obligation?
+   * Is the given element a candidate to be an owning field? A candidate owning field must be final
+   * and have a non-empty must-call obligation.
    *
    * @param element a element
    * @return true iff the given element is a final field with non-empty @MustCall obligation
    */
-  boolean isElementPossibleOwningField(Element element) {
+  boolean isCandidateOwningField(Element element) {
     return (element.getKind().isField()
         && ElementUtils.isFinal(element)
         && !getMustCallValue(element).isEmpty());
@@ -117,11 +118,11 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
     mustCallConsistencyAnalyzer.analyze(cfg);
 
     // Inferring owning annotations for final owning fields
-    if (getWholeProgramInference() != null && cfg != null) {
+    if (getWholeProgramInference() != null) {
       if (cfg.getUnderlyingAST().getKind() == UnderlyingAST.Kind.METHOD) {
         MustCallInferenceLogic mustCallInferenceLogic =
-            new MustCallInferenceLogic(this, mustCallConsistencyAnalyzer, cfg);
-        mustCallInferenceLogic.inference();
+            new MustCallInferenceLogic(this, cfg);
+        mustCallInferenceLogic.runInference();
       }
     }
 
