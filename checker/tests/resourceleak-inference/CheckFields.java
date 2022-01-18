@@ -1,3 +1,4 @@
+import java.io.IOException;
 import org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods;
 import org.checkerframework.checker.mustcall.qual.MustCall;
 import org.checkerframework.checker.mustcall.qual.MustCallAlias;
@@ -30,14 +31,38 @@ import org.checkerframework.checker.mustcall.qual.Owning;
   @MustCall("a") static class FooField {
     private final @Owning Foo finalOwningFoo;
 
-    public FooField(Foo f) {
-      this.finalOwningFoo = f;
+    public FooField() {
+      this.finalOwningFoo = new Foo();
     }
 
-    public Foo ReturnAlias(Foo f) {
+    public @MustCallAlias Foo returnAlias(@MustCallAlias Foo f) {
       Foo ff = f;
       return ff;
     }
+
+    public void owningFoo(Foo f) {
+      Foo ff = returnAlias(f);
+      ff.a();
+    }
+
+    public void notOwningFoo(Foo f) {
+      try {
+        throw new IOException();
+      } catch (IOException e) {
+        f.a();
+      }
+    }
+
+    //    public void owningFooTest() {
+    //      Foo f = new Foo();
+    //      Foo ff = returnAlias(f);
+    //      owningFoo(ff);
+    //    }
+
+    //    public void notOwningFooTest() {
+    //      Foo f = new Foo();
+    //      notOwningFoo(f);
+    //    }
 
     @EnsuresCalledMethods(
         value = {"this.finalOwningFoo"},
@@ -48,9 +73,9 @@ import org.checkerframework.checker.mustcall.qual.Owning;
     }
   }
 
-//  void testField() {
-//    Foo f = new Foo();
-//    FooField fooField = new FooField(f);
-//    fooField.a();
-//  }
+  //  void testField() {
+  //    Foo f = new Foo();
+  //    FooField fooField = new FooField(f);
+  //    fooField.a();
+  //  }
 }
