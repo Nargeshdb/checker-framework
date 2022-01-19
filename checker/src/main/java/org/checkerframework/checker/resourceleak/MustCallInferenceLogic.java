@@ -266,8 +266,11 @@ public class MustCallInferenceLogic {
     List<? extends VariableElement> parameters = getParametersOfInvocation(node);
 
     for (int i = 0; i < arguments.size(); i++) {
-      Obligation obligation =
-          getObligationForVar(obligations, (LocalVariableNode) arguments.get(i));
+      Node tempVar = getTempVarOrNode(arguments.get(i));
+      if (!(tempVar instanceof LocalVariableNode)) {
+        continue;
+      }
+      Obligation obligation = getObligationForVar(obligations, (LocalVariableNode) tempVar);
       if (obligation != null) {
         Node method = getTempVarOrNode(node);
         if (rTypeFactory.hasMustCallAlias(parameters.get(i))) {
@@ -312,6 +315,9 @@ public class MustCallInferenceLogic {
     List<? extends VariableTree> params = method.getParameters();
     Node returnNode = node.getResult();
     returnNode = getTempVarOrNode(returnNode);
+    if (!(returnNode instanceof LocalVariableNode)) {
+      return;
+    }
     Obligation returnObligation = getObligationForVar(obligations, (LocalVariableNode) returnNode);
     if (returnObligation != null) {
 
@@ -336,6 +342,10 @@ public class MustCallInferenceLogic {
     // Use the temporary variable for the rhs if it exists.
     Node rhs = NodeUtils.removeCasts(assignmentNode.getExpression());
     rhs = getTempVarOrNode(rhs);
+
+    if (!(rhs instanceof LocalVariableNode)) {
+      return;
+    }
 
     MethodTree method = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
     Obligation rhsObligation = getObligationForVar(obligations, (LocalVariableNode) rhs);
@@ -425,6 +435,7 @@ public class MustCallInferenceLogic {
     if (receiver.getTree() == null) {
       return;
     }
+    Node receiverTmpVar = getTempVarOrNode(receiver);
 
     Element method = TreeUtils.elementFromTree(mNode.getTree());
 
@@ -440,9 +451,9 @@ public class MustCallInferenceLogic {
         owningFields.add(receiverEl);
       }
 
-    } else {
+    } else if (receiverTmpVar instanceof LocalVariableNode) {
       Obligation receiverObligation =
-          getObligationForVar(obligations, (LocalVariableNode) receiver);
+          getObligationForVar(obligations, (LocalVariableNode) receiverTmpVar);
       if (receiverObligation != null) {
         Set<ResourceAlias> receiverAliases = receiverObligation.resourceAliases;
 
@@ -469,20 +480,15 @@ public class MustCallInferenceLogic {
     if (!owningFields.isEmpty()) {
       AnnotationBuilder builder =
           new AnnotationBuilder(rTypeFactory.getProcessingEnv(), MustCall.class);
-      String[] methodArray = new String[] {method.getSimpleName().toString()};
+      String[] methodArray = new String[] {enMethod.getName().toString()};
       Arrays.sort(methodArray);
       builder.setValue("value", methodArray);
-      builder.build();
       ClassTree classTree = TreePathUtil.enclosingClass(rTypeFactory.getPath(enMethod));
       TypeElement typeElement = TreeUtils.elementFromDeclaration(classTree);
-      if (typeElement != null) {
-        count++;
-      }
-      //      aklfjahffha
+      WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+      wpi.addClassDeclarationAnnotation(typeElement, builder.build());
     }
   }
-
-  int count = 0;
 
   /**
    * Updates {@code worklist} with the next block along all paths to the regular exit point. If the
