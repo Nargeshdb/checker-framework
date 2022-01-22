@@ -944,28 +944,6 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
   }
 
   /**
-   * To continue to use a subclass of {@link
-   * org.checkerframework.framework.util.MultiGraphQualifierHierarchy} or {@link
-   * org.checkerframework.framework.util.GraphQualifierHierarchy}, override this method so that it
-   * returns a new instance of the subclass. Then override {@link #createQualifierHierarchy()} so
-   * that it returns the result of a call to {@link
-   * org.checkerframework.framework.util.MultiGraphQualifierHierarchy#createMultiGraphQualifierHierarchy(AnnotatedTypeFactory)}.
-   *
-   * @param factory MultiGraphFactory
-   * @return QualifierHierarchy
-   * @deprecated Use either {@link ElementQualifierHierarchy}, {@link NoElementQualifierHierarchy},
-   *     or {@link MostlyNoElementQualifierHierarchy} instead. This method will be removed in a
-   *     future release.
-   */
-  @Deprecated // 2020-09-10
-  public QualifierHierarchy createQualifierHierarchyWithMultiGraphFactory(
-      org.checkerframework.framework.util.MultiGraphQualifierHierarchy.MultiGraphFactory factory) {
-    throw new TypeSystemError(
-        "Checker must override AnnotatedTypeFactory#createQualifierHierarchyWithMultiGraphFactory"
-            + " when using AnnotatedTypeFactory#createMultiGraphQualifierHierarchy.");
-  }
-
-  /**
    * Creates the type hierarchy to be used by this factory.
    *
    * <p>Subclasses may override this method to specify new type-checking rules beyond the typical
@@ -4845,7 +4823,7 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
           // Javac used a declared type instead of a captured type variable.  This seems to happen
           // when the bounds of the captured type variable would have been identical. This seems to
           // be a violation of the JLS, but javac does this, so the Checker Framework must handle
-          // that case.
+          // that case. (See https://bugs.openjdk.java.net/browse/JDK-8054309.)
           replaceAnnotations(
               ((AnnotatedWildcardType) uncapturedTypeArg).getSuperBound(), capturedTypeArg);
         }

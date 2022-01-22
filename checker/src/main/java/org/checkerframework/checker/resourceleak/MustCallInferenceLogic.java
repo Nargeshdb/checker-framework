@@ -512,6 +512,7 @@ public class MustCallInferenceLogic {
       // exceptional successors.
       if (successor.getType() == Block.BlockType.SPECIAL_BLOCK) {
         WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+
         assert wpi != null : "MustCallInference is running without WPI.";
         for (Element fieldElt : owningFields) {
           wpi.addFieldDeclarationAnnotation(fieldElt, OWNING);

@@ -1253,8 +1253,9 @@ public class WholeProgramInferenceJavaParserStorage
     }
 
     /**
-     * Returns the inferred declaration annotations on this field, or null if there are no
-     * annotations.
+     * <<<<<<< HEAD Returns the inferred declaration annotations on this field, or null if there are
+     * no ======= Returns the inferred declaration annotations on this field, or an empty set if
+     * there are no >>>>>>> origin/master annotations.
      *
      * @return the declaration annotations for this field declaration
      */
