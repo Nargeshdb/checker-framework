@@ -201,6 +201,11 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
 
     String file = storage.getFileForElement(methodElt);
 
+    //TODO how add annotations for varArgs! The size of arguments is not equal to method parameters and that causes NPE
+    if (methodElt.isVarArgs()) {
+      return;
+    }
+
     for (int i = 0; i < arguments.size(); i++) {
       Node arg = arguments.get(i);
       Tree argTree = arg.getTree();
@@ -411,11 +416,20 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
 
     ExecutableElement methodElt = (ExecutableElement) paramElt.getEnclosingElement();
 
+    int i = methodElt.getParameters().indexOf(paramElt);
+    if (i == -1) {
+      // When paramElt is the parameter of a lambda contained in another
+      // method body, the enclosing element is the outer method body
+      // rather than the lambda itself (which has no element). WPI
+      // does not support inferring types for lambda parameters, so
+      // ignore it.
+      return;
+    }
+
     AnnotatedTypeMirror paramATM = atypeFactory.getAnnotatedType(paramElt);
     AnnotatedTypeMirror argATM = atypeFactory.getAnnotatedType(rhsTree);
     atypeFactory.wpiAdjustForUpdateNonField(argATM);
-    int i = methodElt.getParameters().indexOf(paramElt);
-    assert i != -1;
+
     T paramAnnotations =
         storage.getParameterAnnotations(methodElt, i, paramATM, paramElt, atypeFactory);
     String file = storage.getFileForElement(methodElt);
