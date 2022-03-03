@@ -523,7 +523,7 @@ public class WholeProgramInferenceJavaParserStorage
             // class.
             NewClassTree constructor = (NewClassTree) javacTree.getInitializer();
             if (constructor.getClassBody() != null) {
-              addClass(constructor.getClassBody());
+              addClass(constructor.getClassBody(), null);
             }
           }
 

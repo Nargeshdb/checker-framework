@@ -38,9 +38,13 @@ import org.checkerframework.dataflow.cfg.node.MethodInvocationNode;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.node.ObjectCreationNode;
 import org.checkerframework.dataflow.cfg.node.ReturnNode;
+import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.dataflow.expression.LocalVariable;
 import org.checkerframework.dataflow.util.NodeUtils;
+import org.checkerframework.framework.flow.CFStore;
+import org.checkerframework.framework.flow.CFValue;
 import org.checkerframework.javacutil.AnnotationBuilder;
+import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.BugInCF;
 import org.checkerframework.javacutil.TreePathUtil;
 import org.checkerframework.javacutil.TreeUtils;
@@ -431,62 +435,117 @@ public class MustCallInferenceLogic {
     MethodTree enMethod = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
     List<? extends VariableTree> params = enMethod.getParameters();
 
+    List<String> mustCallValues = null;
     Node receiver = mNode.getTarget().getReceiver();
     if (receiver.getTree() == null) {
-      return;
-    }
-    Node receiverTmpVar = getTempVarOrNode(receiver);
+      for (int i = 0; i < params.size(); i++) {
+        VariableElement paramElt = TreeUtils.elementFromDeclaration(params.get(i));
+        mustCallValues = rTypeFactory.getMustCallValue(paramElt);
+        if (mustCallValues.size() == 1) {
+          CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
+          JavaExpression target = JavaExpression.fromVariableTree(params.get(i));
+          CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
+          AnnotationMirror cmAnnoForMustCallMethods =
+              rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
+          AnnotationMirror cmAnno = null;
+          if (cmValue != null) {
+            for (AnnotationMirror anno : cmValue.getAnnotations()) {
+              if (AnnotationUtils.areSameByName(
+                  anno, "org.checkerframework.checker.calledmethods.qual.CalledMethods")) {
+                cmAnno = anno;
+                break;
+              }
+            }
+          }
+          if (cmAnno == null) {
+            cmAnno = rTypeFactory.top;
+          }
+          if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+            ExecutableElement methodElt = TreeUtils.elementFromDeclaration(enMethod);
+            WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+            wpi.addDeclarationAnnotationToFormalParameter(methodElt, i, OWNING);
+          }
+        }
+      }
+    } else {
 
-    Element method = TreeUtils.elementFromTree(mNode.getTree());
+      Node receiverTmpVar = getTempVarOrNode(receiver);
 
-    Element receiverEl = TreeUtils.elementFromTree(receiver.getTree());
-    List<String> mustCallValues = rTypeFactory.getMustCallValue(receiverEl);
+      Element method = TreeUtils.elementFromTree(mNode.getTree());
 
-    if (receiverEl != null && rTypeFactory.isCandidateOwningField(receiverEl)) {
-      if (mustCallValues.size() == 1
-          && mustCallValues.contains(method.getSimpleName().toString())) {
+      Element receiverEl = TreeUtils.elementFromTree(receiver.getTree());
 
-        // This assumes that any MustCall annotation has at most one element.
-        // TODO: generalize this to MustCall annotations with more than one element.
-        owningFields.add(receiverEl);
+      if (receiverEl != null) {
+        mustCallValues = rTypeFactory.getMustCallValue(receiverEl);
       }
 
-    } else if (receiverTmpVar instanceof LocalVariableNode) {
-      Obligation receiverObligation =
-          getObligationForVar(obligations, (LocalVariableNode) receiverTmpVar);
-      if (receiverObligation != null) {
-        Set<ResourceAlias> receiverAliases = receiverObligation.resourceAliases;
+      if (receiverEl != null && rTypeFactory.isCandidateOwningField(receiverEl)) {
+        if (mustCallValues.size() == 1
+            && mustCallValues.contains(method.getSimpleName().toString())) {
 
-        for (ResourceAlias rl : receiverAliases) {
-          Element resourceElt = rl.reference.getElement();
+          // This assumes that any MustCall annotation has at most one element.
+          // TODO: generalize this to MustCall annotations with more than one element.
+          owningFields.add(receiverEl);
+        }
 
-          for (int i = 0; i < params.size(); i++) {
-            VariableElement paramElt = TreeUtils.elementFromDeclaration(params.get(i));
-            if (resourceElt.equals(paramElt)) {
-              mustCallValues = rTypeFactory.getMustCallValue(paramElt);
+      } else if ((receiverTmpVar instanceof LocalVariableNode)) {
+        Obligation receiverObligation =
+            getObligationForVar(obligations, (LocalVariableNode) receiverTmpVar);
+        if (receiverObligation != null) {
+          Set<ResourceAlias> receiverAliases = receiverObligation.resourceAliases;
 
-              if (mustCallValues.size() == 1
-                  && mustCallValues.contains(method.getSimpleName().toString())) {
-                ExecutableElement methodElt = TreeUtils.elementFromDeclaration(enMethod);
-                WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-                wpi.addDeclarationAnnotationToFormalParameter(methodElt, i, OWNING);
+          for (ResourceAlias rl : receiverAliases) {
+            Element resourceElt = rl.reference.getElement();
+
+            for (int i = 0; i < params.size(); i++) {
+              VariableElement paramElt = TreeUtils.elementFromDeclaration(params.get(i));
+              if (resourceElt.equals(paramElt)) {
+                mustCallValues = rTypeFactory.getMustCallValue(paramElt);
+
+                if (mustCallValues.size() == 1) {
+                  CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
+                  JavaExpression target = JavaExpression.fromVariableTree(params.get(i));
+                  CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
+                  AnnotationMirror cmAnnoForMustCallMethods =
+                      rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
+                  AnnotationMirror cmAnno = null;
+                  if (cmValue != null) {
+                    for (AnnotationMirror anno : cmValue.getAnnotations()) {
+                      if (AnnotationUtils.areSameByName(
+                          anno, "org.checkerframework.checker.calledmethods.qual.CalledMethods")) {
+                        cmAnno = anno;
+                        break;
+                      }
+                    }
+                  }
+                  if (cmAnno == null) {
+                    cmAnno = rTypeFactory.top;
+                  }
+                  if (rTypeFactory
+                      .getQualifierHierarchy()
+                      .isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+                    ExecutableElement methodElt = TreeUtils.elementFromDeclaration(enMethod);
+                    WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+                    wpi.addDeclarationAnnotationToFormalParameter(methodElt, i, OWNING);
+                  }
+                }
               }
             }
           }
         }
       }
-    }
 
-    if (!owningFields.isEmpty()) {
-      AnnotationBuilder builder =
-          new AnnotationBuilder(rTypeFactory.getProcessingEnv(), MustCall.class);
-      String[] methodArray = new String[] {enMethod.getName().toString()};
-      Arrays.sort(methodArray);
-      builder.setValue("value", methodArray);
-      ClassTree classTree = TreePathUtil.enclosingClass(rTypeFactory.getPath(enMethod));
-      TypeElement typeElement = TreeUtils.elementFromDeclaration(classTree);
-      WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-      wpi.addClassDeclarationAnnotation(typeElement, builder.build());
+      if (!owningFields.isEmpty()) {
+        AnnotationBuilder builder =
+            new AnnotationBuilder(rTypeFactory.getProcessingEnv(), MustCall.class);
+        String[] methodArray = new String[] {enMethod.getName().toString()};
+        Arrays.sort(methodArray);
+        builder.setValue("value", methodArray);
+        ClassTree classTree = TreePathUtil.enclosingClass(rTypeFactory.getPath(enMethod));
+        TypeElement typeElement = TreeUtils.elementFromDeclaration(classTree);
+        WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+        wpi.addClassDeclarationAnnotation(typeElement, builder.build());
+      }
     }
   }
 
