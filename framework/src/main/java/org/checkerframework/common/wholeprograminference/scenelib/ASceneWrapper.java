@@ -235,6 +235,10 @@ public class ASceneWrapper {
       // otherwise this loop will sometimes run forever.
     } while (outerClass != null && !previous.equals(outerClass));
 
+    // TODO caused failure for some cases in hbase - investigate it later
+    if (aClass.getTypeElement() != null && !aClass.getTypeElement().equals(classSymbol)) {
+      return;
+    }
     aClass.setTypeElement(classSymbol);
   }
 
