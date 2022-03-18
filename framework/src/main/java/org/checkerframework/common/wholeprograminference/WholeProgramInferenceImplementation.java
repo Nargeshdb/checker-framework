@@ -47,6 +47,7 @@ import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.TreePathUtil;
 import org.checkerframework.javacutil.TreeUtils;
 import org.checkerframework.javacutil.TypesUtils;
+import scenelib.annotations.util.JVMNames;
 
 /**
  * This is the primary implementation of {@link
@@ -95,6 +96,13 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
   /** The type factory associated with this. */
   protected final AnnotatedTypeFactory atypeFactory;
 
+  /**
+   * Whether to print debugging information when an inference is attempted, but cannot be completed.
+   * An inference can be attempted without success for example because the current storage system
+   * does not support placing annotation in the location for which an annotation was inferred.
+   */
+  private final boolean showWpiFailedInferences;
+
   /** The storage for the inferred annotations. */
   private WholeProgramInferenceStorage<T> storage;
 
@@ -107,14 +115,20 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
    *
    * @param atypeFactory the associated type factory
    * @param storage the storage used for inferred annotations and for writing output files
+   * @param showWpiFailedInferences whether the {@code -AshowWpiFailedInferences} argument was
+   *     passed to the checker, and therefore whether to print debugging messages when inference
+   *     fails
    */
   public WholeProgramInferenceImplementation(
-      AnnotatedTypeFactory atypeFactory, WholeProgramInferenceStorage<T> storage) {
+      AnnotatedTypeFactory atypeFactory,
+      WholeProgramInferenceStorage<T> storage,
+      boolean showWpiFailedInferences) {
     this.atypeFactory = atypeFactory;
     this.storage = storage;
     boolean isNullness =
         atypeFactory.getClass().getSimpleName().equals("NullnessAnnotatedTypeFactory");
     this.ignoreNullAssignments = !isNullness;
+    this.showWpiFailedInferences = showWpiFailedInferences;
   }
 
   /**
@@ -138,6 +152,12 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
 
     // Don't infer types for code that can't be annotated anyway.
     if (!storage.hasStorageLocationForMethod(constructorElt)) {
+      if (showWpiFailedInferences) {
+        printFailedInferenceDebugMessage(
+            "WPI could not store information"
+                + "about this constructor: "
+                + JVMNames.getJVMMethodSignature(constructorElt));
+      }
       return;
     }
 
@@ -214,6 +234,21 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
 
       VariableElement ve;
       boolean varargsParam = i >= methodElt.getParameters().size() - 1 && methodElt.isVarArgs();
+      if (varargsParam && this.atypeFactory.wpiOutputFormat == OutputFormat.JAIF) {
+        // The AFU's annotator.Main produces a non-compilable source file when JAIF-based WPI
+        // tries to output an annotated varargs parameter, such as when running the test
+        // checker/tests/ainfer-testchecker/non-annotated/AnonymousAndInnerClass.java.
+        // Until that bug is fixed, do not attempt to infer information about varargs parameters
+        // in JAIF mode.
+        if (showWpiFailedInferences) {
+          printFailedInferenceDebugMessage(
+              "Annotations cannot be placed on varargs parametersin -Ainfer=jaifs mode, because the"
+                  + " JAIF format does not correctly support it.\n"
+                  + "The signature of the method whose varargs parameter was not annotated is: "
+                  + JVMNames.getJVMMethodSignature(methodElt));
+        }
+        return;
+      }
       if (varargsParam) {
         ve = methodElt.getParameters().get(methodElt.getParameters().size() - 1);
       } else {
@@ -449,6 +484,13 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
       // An ArrayCreationNode with a null tree is created when the
       // parameter is a variable-length list. We are ignoring it for now.
       // See Issue 682: https://github.com/typetools/checker-framework/issues/682
+      if (showWpiFailedInferences) {
+        printFailedInferenceDebugMessage(
+            "Could not update from formal parameter "
+                + "assignment, because an ArrayCreationNode with a null tree is created when "
+                + "the parameter is a variable-length list.\nParameter: "
+                + paramElt);
+      }
       return;
     }
 
@@ -461,13 +503,19 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
       // rather than the lambda itself (which has no element). WPI
       // does not support inferring types for lambda parameters, so
       // ignore it.
+      if (showWpiFailedInferences) {
+        printFailedInferenceDebugMessage(
+            "Could not update from formal "
+                + "parameter assignment inside a lambda expression, because lambda parameters "
+                + "cannot be annotated.\nParameter: "
+                + paramElt);
+      }
       return;
     }
 
     AnnotatedTypeMirror paramATM = atypeFactory.getAnnotatedType(paramElt);
     AnnotatedTypeMirror argATM = atypeFactory.getAnnotatedType(rhsTree);
     atypeFactory.wpiAdjustForUpdateNonField(argATM);
-
     T paramAnnotations =
         storage.getParameterAnnotations(methodElt, i, paramATM, paramElt, atypeFactory);
     String file = storage.getFileForElement(methodElt);
@@ -751,6 +799,14 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
       // The one difference in kinds situation that this method can account for is the RHS being
       // a literal null expression.
       if (!(rhsATM instanceof AnnotatedNullType)) {
+        if (showWpiFailedInferences) {
+          printFailedInferenceDebugMessage(
+              "type structure mismatch, so cannot transfer inferred type"
+                  + "to declared type.\nDeclared type kind: "
+                  + rhsATM.getKind()
+                  + "\nInferred type kind: "
+                  + lhsATM.getKind());
+        }
         return;
       }
     }
@@ -771,6 +827,23 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
     storage.updateStorageLocationFromAtm(
         rhsATM, lhsATM, annotationsToUpdate, defLoc, ignoreIfAnnotated);
     storage.setFileModified(file);
+  }
+
+  /**
+   * Prints a debugging message about a failed inference. Must only be called after {@link
+   * #showWpiFailedInferences} has been checked, to avoid constructing the debugging message
+   * eagerly.
+   *
+   * @param reason a message describing the reason an inference was unsuccessful, which will be
+   *     displayed to the user
+   */
+  private void printFailedInferenceDebugMessage(String reason) {
+    assert showWpiFailedInferences;
+    // TODO: it would be nice if this message also included a line number
+    // for the file being analyzed, but I don't know how to get that information
+    // here, given that this message is called from places where only the annotated
+    // type mirrors for the LHS and RHS of some pseduo-assignment are available.
+    System.out.println("WPI failed to make an inference: " + reason);
   }
 
   /**
