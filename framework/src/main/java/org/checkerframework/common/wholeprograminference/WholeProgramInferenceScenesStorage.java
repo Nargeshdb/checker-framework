@@ -293,7 +293,10 @@ public class WholeProgramInferenceScenesStorage
   private ATypeElement getPreconditionsForExpression(
       ExecutableElement methodElement, String expression, AnnotatedTypeMirror declaredType) {
     AMethod methodAnnos = getMethodAnnos(methodElement);
-    preconditionsToDeclaredTypes.put(methodAnnos.methodSignature + expression, declaredType);
+    StringBuilder sb = new StringBuilder();
+    sb.append(methodAnnos.methodSignature);
+    sb.append(expression);
+    preconditionsToDeclaredTypes.put(sb.toString(), declaredType);
     return methodAnnos.vivifyAndAddTypeMirrorToPrecondition(
             expression, declaredType.getUnderlyingType())
         .type;
@@ -310,7 +313,10 @@ public class WholeProgramInferenceScenesStorage
   private ATypeElement getPostconditionsForExpression(
       ExecutableElement methodElement, String expression, AnnotatedTypeMirror declaredType) {
     AMethod methodAnnos = getMethodAnnos(methodElement);
-    postconditionsToDeclaredTypes.put(methodAnnos.methodSignature + expression, declaredType);
+    StringBuilder sb = new StringBuilder();
+    sb.append(methodAnnos.methodSignature);
+    sb.append(expression);
+    postconditionsToDeclaredTypes.put(sb.toString(), declaredType);
     return methodAnnos.vivifyAndAddTypeMirrorToPostcondition(
             expression, declaredType.getUnderlyingType())
         .type;
@@ -325,7 +331,10 @@ public class WholeProgramInferenceScenesStorage
    * @return the declared type
    */
   public AnnotatedTypeMirror getPreconditionDeclaredType(AMethod m, String expression) {
-    String key = m.methodSignature + expression;
+    StringBuilder sb = new StringBuilder();
+    sb.append(m.methodSignature);
+    sb.append(expression);
+    String key = sb.toString();
     if (!preconditionsToDeclaredTypes.containsKey(key)) {
       throw new BugInCF(
           "attempted to retrieve the declared type of a precondition expression for which"
@@ -344,7 +353,10 @@ public class WholeProgramInferenceScenesStorage
    * @return the declared type
    */
   public AnnotatedTypeMirror getPostconditionDeclaredType(AMethod m, String expression) {
-    String key = m.methodSignature + expression;
+    StringBuilder sb = new StringBuilder();
+    sb.append(m.methodSignature);
+    sb.append(expression);
+    String key = sb.toString();
     if (!postconditionsToDeclaredTypes.containsKey(key)) {
       throw new BugInCF(
           "attempted to retrieve the declared type of a postcondition expression for which"
@@ -450,8 +462,11 @@ public class WholeProgramInferenceScenesStorage
    * @return the path to the .jaif file
    */
   protected String getJaifPath(String className) {
-    String jaifPath = JAIF_FILES_PATH + className + ".jaif";
-    return jaifPath;
+    StringBuilder sb = new StringBuilder();
+    sb.append(JAIF_FILES_PATH);
+    sb.append(className);
+    sb.append(".jaif");
+    return sb.toString();
   }
 
   /**

@@ -989,14 +989,15 @@ public abstract class CFAbstractTransfer<
    * @return whether to perform whole-program inference on the tree
    */
   private boolean shouldPerformWholeProgramInference(Tree tree) {
-    return infer && (tree == null || !analysis.checker.shouldSuppressWarnings(tree, ""));
+    @Nullable TreePath path = this.analysis.atypeFactory.getPath(tree);
+    return infer && (tree == null || !analysis.checker.shouldSuppressWarnings(path, ""));
   }
 
   /**
    * Returns true if whole-program inference should be performed. If the expressionTree or lhsTree
    * is in the scope of a @SuppressWarnings, then this method returns false.
    *
-   * @param expressionTree the right-hand side of an assignment
+   * @param expressionTree an assignment tree
    * @param lhsTree the left-hand side of an assignment
    * @return whether to perform whole-program inference
    */
@@ -1019,8 +1020,8 @@ public abstract class CFAbstractTransfer<
    * @return whether to perform whole-program inference
    */
   private boolean shouldPerformWholeProgramInference(Tree tree, Element elt) {
-    return shouldPerformWholeProgramInference(tree)
-        && !analysis.checker.shouldSuppressWarnings(elt, "");
+    return !analysis.checker.shouldSuppressWarnings(elt, "")
+           && shouldPerformWholeProgramInference(tree);
   }
 
   /**

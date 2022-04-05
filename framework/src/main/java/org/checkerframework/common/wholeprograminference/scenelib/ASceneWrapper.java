@@ -133,7 +133,11 @@ public class ASceneWrapper {
         filepath = jaifPath;
         break;
       case STUB:
-        String astubWithChecker = "-" + checker.getClass().getCanonicalName() + ".astub";
+        StringBuilder sb = new StringBuilder();
+        sb.append("-");
+        sb.append(checker.getClass().getCanonicalName());
+        sb.append(".astub");
+        String astubWithChecker = sb.toString();
         filepath = jaifPath.replace(".jaif", astubWithChecker);
         break;
       default:

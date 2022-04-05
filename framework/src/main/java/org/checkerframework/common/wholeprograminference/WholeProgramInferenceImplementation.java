@@ -153,10 +153,12 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
     // Don't infer types for code that can't be annotated anyway.
     if (!storage.hasStorageLocationForMethod(constructorElt)) {
       if (showWpiFailedInferences) {
-        printFailedInferenceDebugMessage(
-            "WPI could not store information"
-                + "about this constructor: "
-                + JVMNames.getJVMMethodSignature(constructorElt));
+        StringBuilder sb = new StringBuilder();
+        sb.append("WPI could not store information");
+        sb.append("about this constructor: ");
+        sb.append(JVMNames.getJVMMethodSignature(constructorElt));
+
+        printFailedInferenceDebugMessage(sb.toString());
       }
       return;
     }
@@ -241,11 +243,13 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
         // Until that bug is fixed, do not attempt to infer information about varargs parameters
         // in JAIF mode.
         if (showWpiFailedInferences) {
-          printFailedInferenceDebugMessage(
-              "Annotations cannot be placed on varargs parametersin -Ainfer=jaifs mode, because the"
-                  + " JAIF format does not correctly support it.\n"
-                  + "The signature of the method whose varargs parameter was not annotated is: "
-                  + JVMNames.getJVMMethodSignature(methodElt));
+          StringBuilder sb = new StringBuilder();
+          sb.append("Annotations cannot be placed on varargs parametersin -Ainfer=jaifs mode, because the");
+          sb.append(" JAIF format does not correctly support it.\n");
+          sb.append("The signature of the method whose varargs parameter was not annotated is: ");
+          sb.append(JVMNames.getJVMMethodSignature(methodElt));
+
+          printFailedInferenceDebugMessage(sb.toString());
         }
         return;
       }
@@ -377,8 +381,11 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
         // are supported for parameters.)
         continue;
       }
+      StringBuilder sb = new StringBuilder();
+      sb.append("#");
+      sb.append(index);
       T preOrPostConditionAnnos =
-          storage.getPreOrPostconditions(preOrPost, methodElt, "#" + index, declType, atypeFactory);
+          storage.getPreOrPostconditions(preOrPost, methodElt, sb.toString(), declType, atypeFactory);
       if (preOrPostConditionAnnos != null) {
         String file = storage.getFileForElement(methodElt);
         updateAnnotationSet(
@@ -485,11 +492,13 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
       // parameter is a variable-length list. We are ignoring it for now.
       // See Issue 682: https://github.com/typetools/checker-framework/issues/682
       if (showWpiFailedInferences) {
-        printFailedInferenceDebugMessage(
-            "Could not update from formal parameter "
-                + "assignment, because an ArrayCreationNode with a null tree is created when "
-                + "the parameter is a variable-length list.\nParameter: "
-                + paramElt);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Could not update from formal parameter ");
+        sb.append("assignment, because an ArrayCreationNode with a null tree is created when ");
+        sb.append("the parameter is a variable-length list.\nParameter: ");
+        sb.append(paramElt);
+
+        printFailedInferenceDebugMessage(sb.toString());
       }
       return;
     }
@@ -504,11 +513,13 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
       // does not support inferring types for lambda parameters, so
       // ignore it.
       if (showWpiFailedInferences) {
-        printFailedInferenceDebugMessage(
-            "Could not update from formal "
-                + "parameter assignment inside a lambda expression, because lambda parameters "
-                + "cannot be annotated.\nParameter: "
-                + paramElt);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Could not update from formal ");
+        sb.append("parameter assignment inside a lambda expression, because lambda parameters ");
+        sb.append("cannot be annotated.\nParameter: ");
+        sb.append(paramElt);
+
+        printFailedInferenceDebugMessage(sb.toString());
       }
       return;
     }
@@ -800,12 +811,14 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
       // a literal null expression.
       if (!(rhsATM instanceof AnnotatedNullType)) {
         if (showWpiFailedInferences) {
-          printFailedInferenceDebugMessage(
-              "type structure mismatch, so cannot transfer inferred type"
-                  + "to declared type.\nDeclared type kind: "
-                  + rhsATM.getKind()
-                  + "\nInferred type kind: "
-                  + lhsATM.getKind());
+          StringBuilder sb = new StringBuilder();
+          sb.append("type structure mismatch, so cannot transfer inferred type");
+          sb.append("to declared type.\nDeclared type kind: ");
+          sb.append(rhsATM.getKind());
+          sb.append("\nInferred type kind: ");
+          sb.append(lhsATM.getKind());
+
+          printFailedInferenceDebugMessage(sb.toString());
         }
         return;
       }
@@ -843,7 +856,10 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
     // for the file being analyzed, but I don't know how to get that information
     // here, given that this message is called from places where only the annotated
     // type mirrors for the LHS and RHS of some pseduo-assignment are available.
-    System.out.println("WPI failed to make an inference: " + reason);
+    StringBuilder sb = new StringBuilder();
+    sb.append("WPI failed to make an inference: ");
+    sb.append(reason);
+    System.out.println(sb);
   }
 
   /**

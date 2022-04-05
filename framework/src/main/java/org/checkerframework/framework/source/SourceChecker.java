@@ -95,306 +95,306 @@ import org.plumelib.util.UtilPlume;
  * AbstractProcessor} (or even this class).
  */
 @SupportedOptions({
-  // When adding a new standard option:
-  // 1. Add a brief blurb here about the use case
-  //    and a pointer to one prominent use of the option.
-  // 2. Update the Checker Framework manual:
-  //     * docs/manual/introduction.tex contains a list of all options,
-  //       which should be in the same order as this source code file.
-  //     * a specific section should contain a detailed discussion.
+    // When adding a new standard option:
+    // 1. Add a brief blurb here about the use case
+    //    and a pointer to one prominent use of the option.
+    // 2. Update the Checker Framework manual:
+    //     * docs/manual/introduction.tex contains a list of all options,
+    //       which should be in the same order as this source code file.
+    //     * a specific section should contain a detailed discussion.
 
-  ///
-  /// Unsound checking: ignore some errors
-  ///
+    ///
+    /// Unsound checking: ignore some errors
+    ///
 
-  // A comma-separated list of warnings to suppress
-  // org.checkerframework.framework.source.SourceChecker.createSuppressWarnings
-  "suppressWarnings",
+    // A comma-separated list of warnings to suppress
+    // org.checkerframework.framework.source.SourceChecker.createSuppressWarnings
+    "suppressWarnings",
 
-  // Set inclusion/exclusion of type uses or definitions
-  // org.checkerframework.framework.source.SourceChecker.shouldSkipUses and similar
-  "skipUses",
-  "onlyUses",
-  "skipDefs",
-  "onlyDefs",
+    // Set inclusion/exclusion of type uses or definitions
+    // org.checkerframework.framework.source.SourceChecker.shouldSkipUses and similar
+    "skipUses",
+    "onlyUses",
+    "skipDefs",
+    "onlyDefs",
 
-  // Unsoundly assume all methods have no side effects, are deterministic, or both.
-  "assumeSideEffectFree",
-  "assumeDeterministic",
-  "assumePure",
+    // Unsoundly assume all methods have no side effects, are deterministic, or both.
+    "assumeSideEffectFree",
+    "assumeDeterministic",
+    "assumePure",
 
-  // Whether to assume that assertions are enabled or disabled
-  // org.checkerframework.framework.flow.CFCFGBuilder.CFCFGBuilder
-  "assumeAssertionsAreEnabled",
-  "assumeAssertionsAreDisabled",
+    // Whether to assume that assertions are enabled or disabled
+    // org.checkerframework.framework.flow.CFCFGBuilder.CFCFGBuilder
+    "assumeAssertionsAreEnabled",
+    "assumeAssertionsAreDisabled",
 
-  // Treat checker errors as warnings
-  // org.checkerframework.framework.source.SourceChecker.report
-  "warns",
+    // Treat checker errors as warnings
+    // org.checkerframework.framework.source.SourceChecker.report
+    "warns",
 
-  ///
-  /// More sound (strict checking): enable errors that are disabled by default
-  ///
+    ///
+    /// More sound (strict checking): enable errors that are disabled by default
+    ///
 
-  // The next ones *increase* rather than *decrease* soundness.  They will eventually be replaced by
-  // their complements (except -AconcurrentSemantics) and moved into the above section.
+    // The next ones *increase* rather than *decrease* soundness.  They will eventually be replaced by
+    // their complements (except -AconcurrentSemantics) and moved into the above section.
 
-  // TODO: Checking of bodies of @SideEffectFree, @Deterministic, and
-  // @Pure methods is temporarily disabled unless -AcheckPurityAnnotations is
-  // supplied on the command line.
-  // Re-enable it after making the analysis more precise.
-  // org.checkerframework.common.basetype.BaseTypeVisitor.visitMethod(MethodTree, Void)
-  "checkPurityAnnotations",
+    // TODO: Checking of bodies of @SideEffectFree, @Deterministic, and
+    // @Pure methods is temporarily disabled unless -AcheckPurityAnnotations is
+    // supplied on the command line.
+    // Re-enable it after making the analysis more precise.
+    // org.checkerframework.common.basetype.BaseTypeVisitor.visitMethod(MethodTree, Void)
+    "checkPurityAnnotations",
 
-  // TODO: Temporary option to make array subtyping invariant,
-  // which will be the new default soon.
-  "invariantArrays",
+    // TODO: Temporary option to make array subtyping invariant,
+    // which will be the new default soon.
+    "invariantArrays",
 
-  // TODO:  Temporary option to make casts stricter, in particular when
-  // casting to an array or generic type. This will be the new default soon.
-  "checkCastElementType",
+    // TODO:  Temporary option to make casts stricter, in particular when
+    // casting to an array or generic type. This will be the new default soon.
+    "checkCastElementType",
 
-  // Whether to use conservative defaults for bytecode and/or source code.
-  // This option takes arguments "source" and/or "bytecode".
-  // The default is "-source,-bytecode" (eventually this will be changed to "-source,bytecode").
-  // Note, in source code, conservative defaults are never
-  // applied to code in the scope of an @AnnotatedFor.
-  // See the "Compiling partially-annotated libraries" and
-  // "Default qualifiers for \<.class> files (conservative library defaults)"
-  // sections in the manual for more details
-  // org.checkerframework.framework.source.SourceChecker.useConservativeDefault
-  "useConservativeDefaultsForUncheckedCode",
-  // Temporary, for backward compatibility
-  "useDefaultsForUncheckedCode",
+    // Whether to use conservative defaults for bytecode and/or source code.
+    // This option takes arguments "source" and/or "bytecode".
+    // The default is "-source,-bytecode" (eventually this will be changed to "-source,bytecode").
+    // Note, in source code, conservative defaults are never
+    // applied to code in the scope of an @AnnotatedFor.
+    // See the "Compiling partially-annotated libraries" and
+    // "Default qualifiers for \<.class> files (conservative library defaults)"
+    // sections in the manual for more details
+    // org.checkerframework.framework.source.SourceChecker.useConservativeDefault
+    "useConservativeDefaultsForUncheckedCode",
+    // Temporary, for backward compatibility
+    "useDefaultsForUncheckedCode",
 
-  // Whether to assume sound concurrent semantics or
-  // simplified sequential semantics
-  // org.checkerframework.framework.flow.CFAbstractTransfer.sequentialSemantics
-  "concurrentSemantics",
+    // Whether to assume sound concurrent semantics or
+    // simplified sequential semantics
+    // org.checkerframework.framework.flow.CFAbstractTransfer.sequentialSemantics
+    "concurrentSemantics",
 
-  // Whether to use a conservative value for type arguments that could not be inferred.
-  // See Issue 979.
-  "conservativeUninferredTypeArguments",
+    // Whether to use a conservative value for type arguments that could not be inferred.
+    // See Issue 979.
+    "conservativeUninferredTypeArguments",
 
-  // Whether to ignore all subtype tests for type arguments that
-  // were inferred for a raw type. Defaults to true.
-  // org.checkerframework.framework.type.TypeHierarchy.isSubtypeTypeArguments
-  "ignoreRawTypeArguments",
+    // Whether to ignore all subtype tests for type arguments that
+    // were inferred for a raw type. Defaults to true.
+    // org.checkerframework.framework.type.TypeHierarchy.isSubtypeTypeArguments
+    "ignoreRawTypeArguments",
 
-  ///
-  /// Type-checking modes:  enable/disable functionality
-  ///
+    ///
+    /// Type-checking modes:  enable/disable functionality
+    ///
 
-  // Lint options
-  // org.checkerframework.framework.source.SourceChecker.getSupportedLintOptions() and similar
-  "lint",
+    // Lint options
+    // org.checkerframework.framework.source.SourceChecker.getSupportedLintOptions() and similar
+    "lint",
 
-  // Whether to suggest methods that could be marked @SideEffectFree,
-  // @Deterministic, or @Pure
-  // org.checkerframework.common.basetype.BaseTypeVisitor.visitMethod(MethodTree, Void)
-  "suggestPureMethods",
+    // Whether to suggest methods that could be marked @SideEffectFree,
+    // @Deterministic, or @Pure
+    // org.checkerframework.common.basetype.BaseTypeVisitor.visitMethod(MethodTree, Void)
+    "suggestPureMethods",
 
-  // Whether to resolve reflective method invocations.
-  // "-AresolveReflection=debug" causes debugging information
-  // to be output.
-  "resolveReflection",
+    // Whether to resolve reflective method invocations.
+    // "-AresolveReflection=debug" causes debugging information
+    // to be output.
+    "resolveReflection",
 
-  // Whether to use whole-program inference. Takes an argument to specify the output format:
-  // "-Ainfer=stubs" or "-Ainfer=jaifs".
-  "infer",
+    // Whether to use whole-program inference. Takes an argument to specify the output format:
+    // "-Ainfer=stubs" or "-Ainfer=jaifs".
+    "infer",
 
-  // With each warning, in addition to the concrete error key,
-  // output the SuppressWarnings strings that can be used to
-  // suppress that warning.
-  "showSuppressWarningsStrings",
+    // With each warning, in addition to the concrete error key,
+    // output the SuppressWarnings strings that can be used to
+    // suppress that warning.
+    "showSuppressWarningsStrings",
 
-  // Warn about @SuppressWarnings annotations that do not suppress any warnings.
-  // org.checkerframework.common.basetype.BaseTypeChecker.warnUnneededSuppressions
-  // org.checkerframework.framework.source.SourceChecker.warnUnneededSuppressions
-  // org.checkerframework.framework.source.SourceChecker.shouldSuppressWarnings(javax.lang.model.element.Element, java.lang.String)
-  // org.checkerframework.framework.source.SourceVisitor.checkForSuppressWarningsAnno
-  "warnUnneededSuppressions",
+    // Warn about @SuppressWarnings annotations that do not suppress any warnings.
+    // org.checkerframework.common.basetype.BaseTypeChecker.warnUnneededSuppressions
+    // org.checkerframework.framework.source.SourceChecker.warnUnneededSuppressions
+    // org.checkerframework.framework.source.SourceChecker.shouldSuppressWarnings(javax.lang.model.element.Element, java.lang.String)
+    // org.checkerframework.framework.source.SourceVisitor.checkForSuppressWarningsAnno
+    "warnUnneededSuppressions",
 
-  // Exceptions to -AwarnUnneededSuppressions.
-  "warnUnneededSuppressionsExceptions",
+    // Exceptions to -AwarnUnneededSuppressions.
+    "warnUnneededSuppressionsExceptions",
 
-  // Require that warning suppression annotations contain a checker key as a prefix in order for
-  // the warning to be suppressed.
-  // org.checkerframework.framework.source.SourceChecker.checkSuppressWarnings(java.lang.String[],
-  // java.lang.String)
-  "requirePrefixInWarningSuppressions",
+    // Require that warning suppression annotations contain a checker key as a prefix in order for
+    // the warning to be suppressed.
+    // org.checkerframework.framework.source.SourceChecker.checkSuppressWarnings(java.lang.String[],
+    // java.lang.String)
+    "requirePrefixInWarningSuppressions",
 
-  // Permit running under JDKs other than those the Checker Framework officially supports.
-  "permitUnsupportedJdkVersion",
+    // Permit running under JDKs other than those the Checker Framework officially supports.
+    "permitUnsupportedJdkVersion",
 
-  // Ignore annotations in bytecode that have invalid annotation locations.
-  // See https://github.com/typetools/checker-framework/issues/2173
-  // org.checkerframework.framework.type.ElementAnnotationApplier.apply
-  "ignoreInvalidAnnotationLocations",
+    // Ignore annotations in bytecode that have invalid annotation locations.
+    // See https://github.com/typetools/checker-framework/issues/2173
+    // org.checkerframework.framework.type.ElementAnnotationApplier.apply
+    "ignoreInvalidAnnotationLocations",
 
-  ///
-  /// Partially-annotated libraries
-  ///
+    ///
+    /// Partially-annotated libraries
+    ///
 
-  // Additional stub files to use
-  // org.checkerframework.framework.type.AnnotatedTypeFactory.parseStubFiles()
-  "stubs",
-  // Additional ajava files to use
-  // org.checkerframework.framework.type.AnnotatedTypeFactory.parserAjavaFiles()
-  "ajava",
-  // Whether to print warnings about types/members in a stub file
-  // that were not found on the class path
-  // org.checkerframework.framework.stub.AnnotationFileParser.warnIfNotFound
-  "stubWarnIfNotFound",
-  // Whether to ignore missing classes even when warnIfNotFound is set to true and other classes
-  // from the same package are present (useful if a package spans more than one jar).
-  // org.checkerframework.framework.stub.AnnotationFileParser.warnIfNotFoundIgnoresClasses
-  "stubWarnIfNotFoundIgnoresClasses",
-  // Whether to print warnings about stub files that overwrite annotations from bytecode.
-  "stubWarnIfOverwritesBytecode",
-  // Whether to print warnings about stub files that are redundant with the annotations from
-  // bytecode.
-  "stubWarnIfRedundantWithBytecode",
-  // Whether to issue a NOTE rather than a WARNING for -AstubWarn* command-line options
-  "stubWarnNote",
-  // With this option, annotations in stub files are used EVEN IF THE SOURCE FILE IS
-  // PRESENT. Only use this option when you intend to store types in stub files rather than
-  // directly in source code, such as during whole-program inference. The annotations in the
-  // stub files will be glb'd with those in the source code before local inference begins.
-  "mergeStubsWithSource",
-  // Already listed above, but worth noting again in this section:
-  // "useConservativeDefaultsForUncheckedCode"
+    // Additional stub files to use
+    // org.checkerframework.framework.type.AnnotatedTypeFactory.parseStubFiles()
+    "stubs",
+    // Additional ajava files to use
+    // org.checkerframework.framework.type.AnnotatedTypeFactory.parserAjavaFiles()
+    "ajava",
+    // Whether to print warnings about types/members in a stub file
+    // that were not found on the class path
+    // org.checkerframework.framework.stub.AnnotationFileParser.warnIfNotFound
+    "stubWarnIfNotFound",
+    // Whether to ignore missing classes even when warnIfNotFound is set to true and other classes
+    // from the same package are present (useful if a package spans more than one jar).
+    // org.checkerframework.framework.stub.AnnotationFileParser.warnIfNotFoundIgnoresClasses
+    "stubWarnIfNotFoundIgnoresClasses",
+    // Whether to print warnings about stub files that overwrite annotations from bytecode.
+    "stubWarnIfOverwritesBytecode",
+    // Whether to print warnings about stub files that are redundant with the annotations from
+    // bytecode.
+    "stubWarnIfRedundantWithBytecode",
+    // Whether to issue a NOTE rather than a WARNING for -AstubWarn* command-line options
+    "stubWarnNote",
+    // With this option, annotations in stub files are used EVEN IF THE SOURCE FILE IS
+    // PRESENT. Only use this option when you intend to store types in stub files rather than
+    // directly in source code, such as during whole-program inference. The annotations in the
+    // stub files will be glb'd with those in the source code before local inference begins.
+    "mergeStubsWithSource",
+    // Already listed above, but worth noting again in this section:
+    // "useConservativeDefaultsForUncheckedCode"
 
-  ///
-  /// Debugging
-  ///
+    ///
+    /// Debugging
+    ///
 
-  /// Amount of detail in messages
+    /// Amount of detail in messages
 
-  // Print the version of the Checker Framework
-  "version",
-  // Print info about git repository from which the Checker Framework was compiled
-  "printGitProperties",
+    // Print the version of the Checker Framework
+    "version",
+    // Print info about git repository from which the Checker Framework was compiled
+    "printGitProperties",
 
-  // Whether to print @InvisibleQualifier marked annotations
-  // org.checkerframework.framework.type.AnnotatedTypeMirror.toString()
-  "printAllQualifiers",
+    // Whether to print @InvisibleQualifier marked annotations
+    // org.checkerframework.framework.type.AnnotatedTypeMirror.toString()
+    "printAllQualifiers",
 
-  // Whether to print [] around a set of type parameters in order to clearly see where they end
-  // e.g.  <E extends F, F extends Object>
-  // without this option the E is printed: E extends F extends Object
-  // with this option:                     E [ extends F [ extends Object super Void ] super Void ]
-  // when multiple type variables are used this becomes useful very quickly
-  "printVerboseGenerics",
+    // Whether to print [] around a set of type parameters in order to clearly see where they end
+    // e.g.  <E extends F, F extends Object>
+    // without this option the E is printed: E extends F extends Object
+    // with this option:                     E [ extends F [ extends Object super Void ] super Void ]
+    // when multiple type variables are used this becomes useful very quickly
+    "printVerboseGenerics",
 
-  // Whether to NOT output a stack trace for each framework error.
-  // org.checkerframework.framework.source.SourceChecker.logBugInCF
-  "noPrintErrorStack",
+    // Whether to NOT output a stack trace for each framework error.
+    // org.checkerframework.framework.source.SourceChecker.logBugInCF
+    "noPrintErrorStack",
 
-  // Only output error code, useful for testing framework
-  // org.checkerframework.framework.source.SourceChecker.message(Kind, Object, String, Object...)
-  "nomsgtext",
+    // Only output error code, useful for testing framework
+    // org.checkerframework.framework.source.SourceChecker.message(Kind, Object, String, Object...)
+    "nomsgtext",
 
-  /// Format of messages
+    /// Format of messages
 
-  // Output detailed message in simple-to-parse format, useful
-  // for tools parsing Checker Framework output.
-  // org.checkerframework.framework.source.SourceChecker.message(Kind, Object, String, Object...)
-  "detailedmsgtext",
+    // Output detailed message in simple-to-parse format, useful
+    // for tools parsing Checker Framework output.
+    // org.checkerframework.framework.source.SourceChecker.message(Kind, Object, String, Object...)
+    "detailedmsgtext",
 
-  /// Stub and JDK libraries
+    /// Stub and JDK libraries
 
-  // Ignore the standard jdk.astub file; primarily for testing or debugging.
-  // org.checkerframework.framework.type.AnnotatedTypeFactory.parseStubFiles()
-  "ignorejdkastub",
+    // Ignore the standard jdk.astub file; primarily for testing or debugging.
+    // org.checkerframework.framework.type.AnnotatedTypeFactory.parseStubFiles()
+    "ignorejdkastub",
 
-  // Whether to check that the annotated JDK is correctly provided
-  // org.checkerframework.common.basetype.BaseTypeVisitor.checkForAnnotatedJdk()
-  "permitMissingJdk",
-  "nocheckjdk", // temporary, for backward compatibility
+    // Whether to check that the annotated JDK is correctly provided
+    // org.checkerframework.common.basetype.BaseTypeVisitor.checkForAnnotatedJdk()
+    "permitMissingJdk",
+    "nocheckjdk", // temporary, for backward compatibility
 
-  // Parse all JDK files at startup rather than as needed.
-  // org.checkerframework.framework.stub.AnnotationFileElementTypes.AnnotationFileElementTypes
-  "parseAllJdk",
+    // Parse all JDK files at startup rather than as needed.
+    // org.checkerframework.framework.stub.AnnotationFileElementTypes.AnnotationFileElementTypes
+    "parseAllJdk",
 
-  // Whether to print debugging messages while processing the stub files
-  // org.checkerframework.framework.stub.AnnotationFileParser.debugAnnotationFileParser
-  "stubDebug",
+    // Whether to print debugging messages while processing the stub files
+    // org.checkerframework.framework.stub.AnnotationFileParser.debugAnnotationFileParser
+    "stubDebug",
 
-  /// Progress tracing
+    /// Progress tracing
 
-  // Output file names before checking
-  // org.checkerframework.framework.source.SourceChecker.typeProcess()
-  "filenames",
+    // Output file names before checking
+    // org.checkerframework.framework.source.SourceChecker.typeProcess()
+    "filenames",
 
-  // Output all subtyping checks
-  // org.checkerframework.common.basetype.BaseTypeVisitor
-  "showchecks",
+    // Output all subtyping checks
+    // org.checkerframework.common.basetype.BaseTypeVisitor
+    "showchecks",
 
-  // Output information about intermediate steps in method type argument inference
-  // org.checkerframework.framework.util.typeinference.DefaultTypeArgumentInference
-  "showInferenceSteps",
+    // Output information about intermediate steps in method type argument inference
+    // org.checkerframework.framework.util.typeinference.DefaultTypeArgumentInference
+    "showInferenceSteps",
 
-  // Output a stack trace when reporting errors or warnings
-  // org.checkerframework.common.basetype.SourceChecker.printStackTrace()
-  "dumpOnErrors",
+    // Output a stack trace when reporting errors or warnings
+    // org.checkerframework.common.basetype.SourceChecker.printStackTrace()
+    "dumpOnErrors",
 
-  /// Visualizing the CFG
+    /// Visualizing the CFG
 
-  // Implemented in the wrapper rather than this file, but worth noting here.
-  // -AoutputArgsToFile
+    // Implemented in the wrapper rather than this file, but worth noting here.
+    // -AoutputArgsToFile
 
-  // Mechanism to visualize the control flow graph (CFG).
-  // The argument is a sequence of values or key-value pairs.
-  // The first argument has to be the fully-qualified name of the
-  // org.checkerframework.dataflow.cfg.CFGVisualizer implementation that should be used. The
-  // remaining values or key-value pairs are passed to CFGVisualizer.init.
-  // For example:
-  //    -Acfgviz=MyViz,a,b=c,d
-  // instantiates class MyViz and calls CFGVisualizer.init
-  // with {"a" -> true, "b" -> "c", "d" -> true}.
-  "cfgviz",
+    // Mechanism to visualize the control flow graph (CFG).
+    // The argument is a sequence of values or key-value pairs.
+    // The first argument has to be the fully-qualified name of the
+    // org.checkerframework.dataflow.cfg.CFGVisualizer implementation that should be used. The
+    // remaining values or key-value pairs are passed to CFGVisualizer.init.
+    // For example:
+    //    -Acfgviz=MyViz,a,b=c,d
+    // instantiates class MyViz and calls CFGVisualizer.init
+    // with {"a" -> true, "b" -> "c", "d" -> true}.
+    "cfgviz",
 
-  // Directory for .dot files generated from the CFG visualization in
-  // org.checkerframework.dataflow.cfg.DOTCFGVisualizer
-  // as initialized by
-  // org.checkerframework.framework.type.GenericAnnotatedTypeFactory.createCFGVisualizer()
-  // -Aflowdotdir=xyz
-  // is short-hand for
-  // -Acfgviz=org.checkerframework.dataflow.cfg.DOTCFGVisualizer,outdir=xyz
-  "flowdotdir",
+    // Directory for .dot files generated from the CFG visualization in
+    // org.checkerframework.dataflow.cfg.DOTCFGVisualizer
+    // as initialized by
+    // org.checkerframework.framework.type.GenericAnnotatedTypeFactory.createCFGVisualizer()
+    // -Aflowdotdir=xyz
+    // is short-hand for
+    // -Acfgviz=org.checkerframework.dataflow.cfg.DOTCFGVisualizer,outdir=xyz
+    "flowdotdir",
 
-  // Enable additional output in the CFG visualization.
-  // -Averbosecfg
-  // is short-hand for
-  // -Acfgviz=MyClass,verbose
-  "verbosecfg",
+    // Enable additional output in the CFG visualization.
+    // -Averbosecfg
+    // is short-hand for
+    // -Acfgviz=MyClass,verbose
+    "verbosecfg",
 
-  /// Caches
+    /// Caches
 
-  // Set the cache size for caches in AnnotatedTypeFactory
-  "atfCacheSize",
+    // Set the cache size for caches in AnnotatedTypeFactory
+    "atfCacheSize",
 
-  // Sets AnnotatedTypeFactory shouldCache to false
-  "atfDoNotCache",
+    // Sets AnnotatedTypeFactory shouldCache to false
+    "atfDoNotCache",
 
-  /// Miscellaneous debugging options
+    /// Miscellaneous debugging options
 
-  // Whether to output resource statistics at JVM shutdown
-  // org.checkerframework.framework.source.SourceChecker.shutdownHook()
-  "resourceStats",
+    // Whether to output resource statistics at JVM shutdown
+    // org.checkerframework.framework.source.SourceChecker.shutdownHook()
+    "resourceStats",
 
-  // Parse all JDK files at startup rather than as needed.
-  "parseAllJdk",
+    // Parse all JDK files at startup rather than as needed.
+    "parseAllJdk",
 
-  // Run checks that test ajava files.
-  //
-  // Whenever processing a source file, parse it with JavaParser and check that the AST can be
-  // matched with javac's tree. Crash if not. For testing the class JointJavacJavaParserVisitor.
-  //
-  // Also checks that annotations can be inserted. For each Java file, clears all annotations and
-  // reinserts them, then checks if the original and modified ASTs are equivalent.
-  "ajavaChecks",
+    // Run checks that test ajava files.
+    //
+    // Whenever processing a source file, parse it with JavaParser and check that the AST can be
+    // matched with javac's tree. Crash if not. For testing the class JointJavacJavaParserVisitor.
+    //
+    // Also checks that annotations can be inserted. For each Java file, clears all annotations and
+    // reinserts them, then checks if the original and modified ASTs are equivalent.
+    "ajavaChecks",
 })
 public abstract class SourceChecker extends AbstractTypeProcessor implements OptionConfiguration {
 
@@ -2023,9 +2023,6 @@ public abstract class SourceChecker extends AbstractTypeProcessor implements Opt
           "Checker must provide a SuppressWarnings prefix."
               + " SourceChecker#getSuppressWarningsPrefixes was not overridden correctly.");
     }
-    if (shouldSuppress(getSuppressWarningsStringsFromOption(), errKey)) {
-      return true;
-    }
 
     if (shouldSuppress(getSuppressWarningsStringsFromOption(), errKey)) {
       // If the error key matches a warning string in the -AsuppressWarnings, then suppress
@@ -2035,6 +2032,25 @@ public abstract class SourceChecker extends AbstractTypeProcessor implements Opt
 
     // trees.getPath might be slow, but this is only used in error reporting
     @Nullable TreePath path = trees.getPath(this.currentRoot, tree);
+
+    return shouldSuppressWarnings(path, errKey);
+  }
+
+  /**
+   * Determines whether all the warnings pertaining to a given tree path should be suppressed. Returns
+   * true if the path is within the scope of a @SuppressWarnings annotation, one of whose values
+   * suppresses all the checker's warnings.
+   *
+   * @param path the TreePath that might be a source of, or related to, a warning
+   * @param errKey the error key the checker is emitting
+   * @return true if no warning should be emitted for the given path because it is contained by a
+   *     declaration with an appropriately-valued {@code @SuppressWarnings} annotation; false
+   *     otherwise
+   */
+  public boolean shouldSuppressWarnings(@Nullable TreePath path, String errKey) {
+    if (path == null) {
+      return false;
+    }
 
     @Nullable VariableTree var = TreePathUtil.enclosingVariable(path);
     if (var != null && shouldSuppressWarnings(TreeUtils.elementFromTree(var), errKey)) {
@@ -2271,7 +2287,7 @@ public abstract class SourceChecker extends AbstractTypeProcessor implements Opt
    * @param elt the source code element to check, or null
    * @return true if the element is annotated for this checker or an upstream checker
    */
-  private boolean isAnnotatedForThisCheckerOrUpstreamChecker(@Nullable Element elt) {
+  public boolean isAnnotatedForThisCheckerOrUpstreamChecker(@Nullable Element elt) {
 
     if (elt == null || !useConservativeDefault("source")) {
       return false;
@@ -2550,8 +2566,8 @@ public abstract class SourceChecker extends AbstractTypeProcessor implements Opt
             + t.getClass().getSimpleName()
             + ")"
             + ((p == null)
-                ? ""
-                : " while processing " + p.getCompilationUnit().getSourceFile().getName())
+            ? ""
+            : " while processing " + p.getCompilationUnit().getSourceFile().getName())
             + (t.getMessage() == null ? "" : "; message: " + t.getMessage()),
         t);
   }
@@ -2643,7 +2659,7 @@ public abstract class SourceChecker extends AbstractTypeProcessor implements Opt
     gitPropertiesPrinted = true;
 
     try (InputStream in = getClass().getResourceAsStream("/git.properties");
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in)); ) {
+         BufferedReader reader = new BufferedReader(new InputStreamReader(in)); ) {
       String line;
       while ((line = reader.readLine()) != null) {
         System.out.println(line);
@@ -2692,8 +2708,8 @@ public abstract class SourceChecker extends AbstractTypeProcessor implements Opt
     }
     // Gradle incremental build also wraps the processing environment.
     for (Class<?> envClass = env.getClass();
-        envClass != null;
-        envClass = envClass.getSuperclass()) {
+         envClass != null;
+         envClass = envClass.getSuperclass()) {
       ProcessingEnvironment unwrappedGradle = unwrapGradle(envClass, env);
       if (unwrappedGradle != null) {
         return unwrapProcessingEnvironment(unwrappedGradle);

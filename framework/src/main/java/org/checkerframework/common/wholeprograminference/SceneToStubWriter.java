@@ -1,6 +1,7 @@
 package org.checkerframework.common.wholeprograminference;
 
 import com.google.common.collect.ComparisonChain;
+import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -132,17 +133,26 @@ public final class SceneToStubWriter {
   public static String formatAnnotation(Annotation a) {
     String fullAnnoName = a.def().name;
     String simpleAnnoName = fullAnnoName.substring(fullAnnoName.lastIndexOf('.') + 1);
+    StringBuilder sb = new StringBuilder();
+    sb.append("@");
+    sb.append(simpleAnnoName);
     if (a.fieldValues.isEmpty()) {
-      return "@" + simpleAnnoName;
+      return sb.toString();
     }
-    StringJoiner sj = new StringJoiner(", ", "@" + simpleAnnoName + "(", ")");
+    sb.append("(");
+    StringJoiner sj = new StringJoiner(", ", sb.toString(), ")");
     if (a.fieldValues.size() == 1 && a.fieldValues.containsKey("value")) {
       AnnotationFieldType aft = a.def().fieldTypes.get("value");
       sj.add(aft.format(a.fieldValues.get("value")));
     } else {
       for (Map.Entry<String, Object> f : a.fieldValues.entrySet()) {
         AnnotationFieldType aft = a.def().fieldTypes.get(f.getKey());
-        sj.add(f.getKey() + "=" + aft.format(f.getValue()));
+        sb = new StringBuilder();
+        sb.append(f.getKey());
+        sb.append("=");
+        sb.append(aft.format(f.getValue()));
+
+        sj.add(sb.toString());
       }
     }
     return sj.toString();
@@ -183,8 +193,11 @@ public final class SceneToStubWriter {
       componentType = ((ArrayType) componentType).getComponentType();
       scenelibComponent = getNextArrayLevel(scenelibComponent);
     }
-    return formatType(scenelibComponent, componentType)
-        + formatArrayTypeImpl(scenelibRep, javacRep);
+    StringBuilder sb = new StringBuilder();
+    sb.append(formatType(scenelibComponent, componentType));
+    sb.append(formatArrayTypeImpl(scenelibRep, javacRep));
+
+    return sb.toString();
   }
 
   /**
@@ -200,20 +213,21 @@ public final class SceneToStubWriter {
   private static String formatArrayTypeImpl(ATypeElement scenelibRep, ArrayType javacRep) {
     TypeMirror javacComponent = javacRep.getComponentType();
     ATypeElement scenelibComponent = getNextArrayLevel(scenelibRep);
-    String result = "";
+    StringBuilder sb = new StringBuilder("");
     List<? extends AnnotationMirror> explicitAnnos = javacRep.getAnnotationMirrors();
     for (AnnotationMirror explicitAnno : explicitAnnos) {
-      result += explicitAnno.toString();
-      result += " ";
+      sb.append(explicitAnno.toString());
+      sb.append(" ");
     }
-    if (result.isEmpty() && scenelibRep != null) {
-      result += formatAnnotations(scenelibRep.tlAnnotationsHere);
+    if (sb.length() == 0 && scenelibRep != null) {
+      sb.append(formatAnnotations(scenelibRep.tlAnnotationsHere));
     }
-    result += "[] ";
+    sb.append("[] ");
     if (javacComponent.getKind() == TypeKind.ARRAY) {
-      return result + formatArrayTypeImpl(scenelibComponent, (ArrayType) javacComponent);
+      sb.append(formatArrayTypeImpl(scenelibComponent, (ArrayType) javacComponent));
+      return sb.toString();
     } else {
-      return result;
+      return sb.toString();
     }
   }
 
@@ -281,10 +295,15 @@ public final class SceneToStubWriter {
    * @return a String suitable to print in a stub file
    */
   private static String formatAFieldImpl(AField aField, String fieldName, String className) {
+    StringBuilder sb = new StringBuilder();
     if ("this".equals(fieldName)) {
-      return formatType(aField.type, null, className) + fieldName;
+      sb.append(formatType(aField.type, null, className));
+      sb.append(fieldName);
+      return sb.toString();
     } else {
-      return formatType(aField.type, aField.getTypeMirror()) + fieldName;
+      sb.append(formatType(aField.type, aField.getTypeMirror()));
+      sb.append(fieldName);
+      return sb.toString();
     }
   }
 
@@ -341,20 +360,26 @@ public final class SceneToStubWriter {
 
     // fields don't need their generic types, and sometimes they are wrong. Just don't print them.
     while (basetypeToPrint.contains("<")) {
-      basetypeToPrint =
-          basetypeToPrint.substring(0, basetypeToPrint.indexOf('<'))
-              + basetypeToPrint.substring(basetypeToPrint.lastIndexOf('>') + 1);
+      StringBuilder sb = new StringBuilder();
+      sb.append(basetypeToPrint.substring(0, basetypeToPrint.indexOf('<')));
+      sb.append(basetypeToPrint.substring(basetypeToPrint.lastIndexOf('>') + 1));
+      basetypeToPrint = sb.toString();
     }
 
     // An array is not a receiver, so using the javacType to check for arrays is safe.
     if (javacType != null && javacType.getKind() == TypeKind.ARRAY) {
       return formatArrayType(aType, (ArrayType) javacType);
     }
-
+    StringBuilder sb = new StringBuilder();
     if (aType == null) {
-      return basetypeToPrint + " ";
+      sb.append(basetypeToPrint);
+      sb.append(" ");
+      return sb.toString();
     } else {
-      return formatAnnotations(aType.tlAnnotationsHere) + basetypeToPrint + " ";
+      sb.append(formatAnnotations(aType.tlAnnotationsHere));
+      sb.append(basetypeToPrint);
+      sb.append(" ");
+      return sb.toString();
     }
   }
 
@@ -386,7 +411,11 @@ public final class SceneToStubWriter {
     @Override
     protected void visitAnnotationDef(AnnotationDef d) {
       if (!isInternalJDKAnnotation(d.name)) {
-        printWriter.println("import " + d.name + ";");
+        StringBuilder sb = new StringBuilder();
+        sb.append("import ");
+        sb.append(d.name);
+        sb.append(";");
+        printWriter.println(sb);
       }
     }
   }
@@ -428,7 +457,11 @@ public final class SceneToStubWriter {
       String nameToPrint = classNames[i];
       if (i == classNames.length - 1) {
         printWriter.print(indents(i));
-        printWriter.println("@AnnotatedFor(\"" + checker.getClass().getCanonicalName() + "\")");
+        StringBuilder sb = new StringBuilder();
+        sb.append("@AnnotatedFor(\"");
+        sb.append(checker.getClass().getCanonicalName());
+        sb.append("\")");
+        printWriter.println(sb);
       }
       printWriter.print(indents(i));
       if (aClass.isEnum(nameToPrint)) {
@@ -446,8 +479,11 @@ public final class SceneToStubWriter {
       printTypeParameters(typeElements[i], printWriter);
       printWriter.println(" {");
       if (aClass.isEnum(nameToPrint) && i != classNames.length - 1) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(indents(i + 1));
+        sb.append("/* omitted enum constants */ ;");
         // Print a blank set of enum constants if this is an outer enum.
-        printWriter.println(indents(i + 1) + "/* omitted enum constants */ ;");
+        printWriter.println(sb);
       }
       printWriter.println();
     }
@@ -487,8 +523,10 @@ public final class SceneToStubWriter {
     if (aClass.getFields().isEmpty()) {
       return;
     }
-
-    printWriter.println(indentLevel + "// fields:");
+    StringBuilder sb = new StringBuilder();
+    sb.append(indentLevel);
+    sb.append("// fields:");
+    printWriter.println(sb);
     printWriter.println();
     for (Map.Entry<String, AField> fieldEntry : aClass.getFields().entrySet()) {
       String fieldName = fieldEntry.getKey();
@@ -624,7 +662,7 @@ public final class SceneToStubWriter {
       if (isPrintable(clazz, scene.getAScene().getClasses().get(clazz))) {
         if (!anyClassPrintable) {
           try {
-            printWriter = new PrintWriter(new FileWriter(filename));
+            printWriter = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
           } catch (IOException e) {
             throw new BugInCF("error writing file during WPI: " + filename);
           }
@@ -698,8 +736,12 @@ public final class SceneToStubWriter {
         basename.contains("$") ? basename.substring(basename.lastIndexOf('$') + 1) : basename;
     String pkg = packagePart(classname);
 
+    StringBuilder sb = new StringBuilder();
     if (pkg != null) {
-      printWriter.println("package " + pkg + ";");
+      sb.append("package ");
+      sb.append(pkg);
+      sb.append(";");
+      printWriter.println(sb);
     }
 
     int curlyCount = printClassDefinitions(basename, aClass, printWriter, checker);
@@ -712,10 +754,17 @@ public final class SceneToStubWriter {
       for (VariableElement enumConstant : enumConstants) {
         sj.add(enumConstant.getSimpleName());
       }
-
-      printWriter.println(indentLevel + "// enum constants:");
+      sb = new StringBuilder();
+      sb.append(indentLevel);
+      sb.append("// enum constants:");
+      printWriter.println(sb);
       printWriter.println();
-      printWriter.println(indentLevel + sj.toString() + ";");
+
+      sb = new StringBuilder();
+      sb.append(indentLevel);
+      sb.append(sj);
+      sb.append(";");
+      printWriter.println(sb);
       printWriter.println();
     }
 
@@ -723,7 +772,10 @@ public final class SceneToStubWriter {
 
     if (!aClass.getMethods().isEmpty()) {
       // print method signatures
-      printWriter.println(indentLevel + "// methods:");
+      sb = new StringBuilder();
+      sb.append(indentLevel);
+      sb.append("// methods:");
+      printWriter.println(sb);
       printWriter.println();
       for (Map.Entry<String, AMethod> methodEntry : aClass.getMethods().entrySet()) {
         printMethodDeclaration(
@@ -735,7 +787,10 @@ public final class SceneToStubWriter {
       }
     }
     for (int i = 0; i < curlyCount; i++) {
-      printWriter.println(indents(curlyCount - i - 1) + "}");
+      sb = new StringBuilder();
+      sb.append(indents(curlyCount - i - 1));
+      sb.append("}");
+      printWriter.println(sb);
     }
   }
 
