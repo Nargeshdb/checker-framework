@@ -3,7 +3,7 @@ package org.checkerframework.checker.test.junit.ainferrunners;
 import java.io.File;
 import java.util.List;
 import org.checkerframework.checker.testchecker.ainfer.AinferTestChecker;
-import org.checkerframework.framework.test.CheckerFrameworkPerDirectoryTest;
+import org.checkerframework.framework.test.AinferGeneratePerDirectoryTest;
 import org.junit.experimental.categories.Category;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -16,7 +16,7 @@ import org.junit.runners.Parameterized.Parameters;
  * the expected ones. The errors on .java files must be ignored.
  */
 @Category(AinferTestCheckerAjavaTest.class)
-public class AinferTestCheckerAjavaTest extends CheckerFrameworkPerDirectoryTest {
+public class AinferTestCheckerAjavaTest extends AinferGeneratePerDirectoryTest {
 
   /** @param testFiles the files containing test code, which will be type-checked */
   public AinferTestCheckerAjavaTest(List<File> testFiles) {
@@ -27,6 +27,12 @@ public class AinferTestCheckerAjavaTest extends CheckerFrameworkPerDirectoryTest
         "-Anomsgtext",
         "-Ainfer=ajava",
         "-Awarns");
+    // Do not typecheck the file all-systems/java8/memberref/Purity.java: it contains
+    // an expected error that will be issued as a warning, instead (because of -Awarns).
+    // Since it is part of the all-systems tests, it cannot be changed (that would break other
+    // checkers). Instead, a copy of the file with the expected warning (rather than error)
+    // has been added to the ainfer non-annotated suite.
+    doNotTypecheck("all-systems/java8/memberref/Purity.java");
   }
 
   @Parameters

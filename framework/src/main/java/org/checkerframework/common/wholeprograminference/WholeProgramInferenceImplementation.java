@@ -244,8 +244,9 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
         // in JAIF mode.
         if (showWpiFailedInferences) {
           StringBuilder sb = new StringBuilder();
-          sb.append("Annotations cannot be placed on varargs parametersin -Ainfer=jaifs mode, because the");
-          sb.append(" JAIF format does not correctly support it.\n");
+          sb.append(
+              "Annotations cannot be placed on varargs parameters in -Ainfer=jaifs mode, because");
+          sb.append(" the JAIF format does not correctly support it.\n");
           sb.append("The signature of the method whose varargs parameter was not annotated is: ");
           sb.append(JVMNames.getJVMMethodSignature(methodElt));
 
@@ -277,6 +278,17 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
           expandArgATM = true;
         }
         if (expandArgATM) {
+          if (argATM.getKind() == TypeKind.WILDCARD) {
+            if (showWpiFailedInferences) {
+              printFailedInferenceDebugMessage(
+                  "Javac cannot create an array type "
+                      + "from a wildcard, so WPI did not attempt to infer a type for an array "
+                      + "parameter. The signature of the method whose parameter had inference "
+                      + "skipped is: "
+                      + JVMNames.getJVMMethodSignature(methodElt));
+            }
+            return;
+          }
           AnnotatedTypeMirror argArray =
               AnnotatedTypeMirror.createType(
                   TypesUtils.createArrayType(argATM.getUnderlyingType(), atypeFactory.types),
@@ -385,7 +397,8 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
       sb.append("#");
       sb.append(index);
       T preOrPostConditionAnnos =
-          storage.getPreOrPostconditions(preOrPost, methodElt, sb.toString(), declType, atypeFactory);
+          storage.getPreOrPostconditions(
+              preOrPost, methodElt, sb.toString(), declType, atypeFactory);
       if (preOrPostConditionAnnos != null) {
         String file = storage.getFileForElement(methodElt);
         updateAnnotationSet(
@@ -874,6 +887,10 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
 
     switch (sourceCodeATM.getKind()) {
       case TYPEVAR:
+        if (!(ajavaATM instanceof AnnotatedTypeVariable)) {
+          assert TypesUtils.isObject(ajavaATM.getUnderlyingType());
+          break;
+        }
         updateAtmWithLub(
             ((AnnotatedTypeVariable) sourceCodeATM).getLowerBound(),
             ((AnnotatedTypeVariable) ajavaATM).getLowerBound());
@@ -896,9 +913,23 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
         //         ((AnnotatedWildcardType) ajavaATM).getSuperBound());
         // break;
       case ARRAY:
-        updateAtmWithLub(
-            ((AnnotatedArrayType) sourceCodeATM).getComponentType(),
-            ((AnnotatedArrayType) ajavaATM).getComponentType());
+        AnnotatedTypeMirror sourceCodeComponent =
+            ((AnnotatedArrayType) sourceCodeATM).getComponentType();
+        AnnotatedTypeMirror ajavaComponent = ((AnnotatedArrayType) ajavaATM).getComponentType();
+        if (sourceCodeComponent.getKind() == ajavaComponent.getKind()) {
+          updateAtmWithLub(sourceCodeComponent, ajavaComponent);
+        } else {
+          if (showWpiFailedInferences) {
+            printFailedInferenceDebugMessage(
+                "attempted to update the component type of an array type, but found an unexpected"
+                    + " difference in type structure.\n"
+                    + "LHS kind: "
+                    + sourceCodeComponent.getKind()
+                    + "\nRHS kind: "
+                    + ajavaComponent.getKind());
+            break;
+          }
+        }
         break;
         // case DECLARED:
         // Inferring annotations on type arguments is not supported, so no need to recur on generic

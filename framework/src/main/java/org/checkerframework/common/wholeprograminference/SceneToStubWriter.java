@@ -360,9 +360,21 @@ public final class SceneToStubWriter {
 
     // fields don't need their generic types, and sometimes they are wrong. Just don't print them.
     while (basetypeToPrint.contains("<")) {
+      int openCount = 1;
+      int pos = basetypeToPrint.indexOf('<');
+      while (openCount > 0) {
+        pos++;
+        if (basetypeToPrint.charAt(pos) == '<') {
+          openCount++;
+        }
+        if (basetypeToPrint.charAt(pos) == '>') {
+          openCount--;
+        }
+      }
+
       StringBuilder sb = new StringBuilder();
       sb.append(basetypeToPrint.substring(0, basetypeToPrint.indexOf('<')));
-      sb.append(basetypeToPrint.substring(basetypeToPrint.lastIndexOf('>') + 1));
+      sb.append(basetypeToPrint.substring(pos + 1));
       basetypeToPrint = sb.toString();
     }
 
