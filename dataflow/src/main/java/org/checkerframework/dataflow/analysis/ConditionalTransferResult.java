@@ -28,9 +28,6 @@ public class ConditionalTransferResult<V extends AbstractValue<V>, S extends Sto
   /** The 'else' result store. */
   protected final S elseStore;
 
-  /** The regular result store. */
-  protected final S store;
-
   /**
    * Create a new {@link #ConditionalTransferResult(AbstractValue, Store, Store, Map, boolean)},
    * using {@code null} for {@link #exceptionalStores}.
@@ -116,13 +113,12 @@ public class ConditionalTransferResult<V extends AbstractValue<V>, S extends Sto
     this.thenStore = thenStore;
     this.elseStore = elseStore;
     this.storeChanged = storeChanged;
-    this.store = thenStore.leastUpperBound(elseStore);
   }
 
   /** The regular result store. */
   @Override
   public S getRegularStore() {
-    return store;
+    return thenStore.leastUpperBound(elseStore);
   }
 
   @Override

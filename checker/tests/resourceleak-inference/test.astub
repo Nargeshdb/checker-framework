@@ -1,0 +1,25 @@
+import org.checkerframework.checker.mustcall.qual.MustCall;
+import org.checkerframework.checker.mustcall.qual.MustCallAlias;
+import org.checkerframework.checker.calledmethods.qual.CalledMethods;
+import org.checkerframework.checker.mustcall.qual.Owning;
+import org.checkerframework.framework.qual.AnnotatedFor;
+
+@AnnotatedFor("org.checkerframework.checker.resourceleak.ResourceLeakChecker")
+class @MustCall("checkFieldsFinalizer") CheckFields {
+
+  // fields:
+
+  @Owning
+  @CalledMethods({}) CheckFields.Foo checkFieldsFoo;
+
+  // methods:
+
+  @MustCallAlias
+  CheckFields(@MustCallAlias CheckFields.Foo f);
+
+  @CalledMethods({}) CheckFields.Foo makeFoo();
+
+  @org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods(value={"this.checkFieldsFoo"}, methods={"a"})
+  void checkFieldsFinalizer();
+
+}

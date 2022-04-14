@@ -358,7 +358,6 @@ public class MustCallInferenceLogic {
         && lhsElement.getKind() == ElementKind.FIELD
         && TreeUtils.isConstructor(method)) {
       if (rTypeFactory.getDeclAnnotation(lhsElement, Owning.class) != null) {
-
         Set<ResourceAlias> rhsAliases = rhsObligation.resourceAliases;
         for (ResourceAlias rl : rhsAliases) {
           Element rhdElt = rl.reference.getElement();
@@ -462,7 +461,9 @@ public class MustCallInferenceLogic {
           }
           if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
             ExecutableElement methodElt = TreeUtils.elementFromDeclaration(enMethod);
+
             WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+
             wpi.addDeclarationAnnotationToFormalParameter(methodElt, i, OWNING);
           }
         }
