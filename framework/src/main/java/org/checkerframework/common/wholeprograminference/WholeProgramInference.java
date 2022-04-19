@@ -8,6 +8,7 @@ import java.util.Map;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.dataflow.analysis.Analysis;
@@ -186,14 +187,18 @@ public interface WholeProgramInference {
    * @param anno the declaration annotation to add to the method
    */
   void addMethodDeclarationAnnotation(ExecutableElement methodElt, AnnotationMirror anno);
-
   /**
    * Updates a field to add a declaration annotation.
    *
    * @param fieldElt the field to annotate
-   * @param anno the declaration annotation to add to the field
+   * @param anno the declaration annotation to add to the method
    */
   void addFieldDeclarationAnnotation(Element fieldElt, AnnotationMirror anno);
+
+  void addDeclarationAnnotationToFormalParameter(
+      ExecutableElement methodElt, int index, AnnotationMirror anno);
+
+  void addClassDeclarationAnnotation(TypeElement classElt, AnnotationMirror anno);
 
   /**
    * Writes the inferred results to a file. Ideally, it should be called at the end of the

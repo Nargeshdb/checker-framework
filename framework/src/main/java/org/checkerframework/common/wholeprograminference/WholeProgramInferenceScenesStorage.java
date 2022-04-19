@@ -15,6 +15,7 @@ import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -156,6 +157,9 @@ public class WholeProgramInferenceScenesStorage
         ClassSymbol enclosingClass = ((VarSymbol) elt).enclClass();
         className = enclosingClass.flatname.toString();
         break;
+      case CLASS:
+        className = ElementUtils.getQualifiedName(elt);
+        break;
       default:
         throw new BugInCF("What element? %s %s", elt.getKind(), elt);
     }
@@ -289,7 +293,10 @@ public class WholeProgramInferenceScenesStorage
   private ATypeElement getPreconditionsForExpression(
       ExecutableElement methodElement, String expression, AnnotatedTypeMirror declaredType) {
     AMethod methodAnnos = getMethodAnnos(methodElement);
-    preconditionsToDeclaredTypes.put(methodAnnos.methodSignature + expression, declaredType);
+    StringBuilder sb = new StringBuilder();
+    sb.append(methodAnnos.methodSignature);
+    sb.append(expression);
+    preconditionsToDeclaredTypes.put(sb.toString(), declaredType);
     return methodAnnos.vivifyAndAddTypeMirrorToPrecondition(
             expression, declaredType.getUnderlyingType())
         .type;
@@ -306,7 +313,10 @@ public class WholeProgramInferenceScenesStorage
   private ATypeElement getPostconditionsForExpression(
       ExecutableElement methodElement, String expression, AnnotatedTypeMirror declaredType) {
     AMethod methodAnnos = getMethodAnnos(methodElement);
-    postconditionsToDeclaredTypes.put(methodAnnos.methodSignature + expression, declaredType);
+    StringBuilder sb = new StringBuilder();
+    sb.append(methodAnnos.methodSignature);
+    sb.append(expression);
+    postconditionsToDeclaredTypes.put(sb.toString(), declaredType);
     return methodAnnos.vivifyAndAddTypeMirrorToPostcondition(
             expression, declaredType.getUnderlyingType())
         .type;
@@ -321,7 +331,10 @@ public class WholeProgramInferenceScenesStorage
    * @return the declared type
    */
   public AnnotatedTypeMirror getPreconditionDeclaredType(AMethod m, String expression) {
-    String key = m.methodSignature + expression;
+    StringBuilder sb = new StringBuilder();
+    sb.append(m.methodSignature);
+    sb.append(expression);
+    String key = sb.toString();
     if (!preconditionsToDeclaredTypes.containsKey(key)) {
       throw new BugInCF(
           "attempted to retrieve the declared type of a precondition expression for which"
@@ -340,7 +353,10 @@ public class WholeProgramInferenceScenesStorage
    * @return the declared type
    */
   public AnnotatedTypeMirror getPostconditionDeclaredType(AMethod m, String expression) {
-    String key = m.methodSignature + expression;
+    StringBuilder sb = new StringBuilder();
+    sb.append(m.methodSignature);
+    sb.append(expression);
+    String key = sb.toString();
     if (!postconditionsToDeclaredTypes.containsKey(key)) {
       throw new BugInCF(
           "attempted to retrieve the declared type of a postcondition expression for which"
@@ -382,6 +398,43 @@ public class WholeProgramInferenceScenesStorage
     return isNewAnnotation;
   }
 
+  @Override
+  public boolean addDeclarationAnnotationToFormalParameter(
+      ExecutableElement methodElt, int index, AnnotationMirror anno) {
+    if (!ElementUtils.isElementFromSourceCode(methodElt)) {
+      return false;
+    }
+
+    VariableElement paramElt = methodElt.getParameters().get(index);
+    AnnotatedTypeMirror paramAType = atypeFactory.getAnnotatedType(paramElt);
+    ATypeElement paramAnnos =
+        getParameterAnnotations(methodElt, index, paramAType, paramElt, atypeFactory);
+    scenelib.annotations.Annotation sceneAnno =
+        AnnotationConverter.annotationMirrorToAnnotation(anno);
+
+    boolean isNewAnnotation = paramAnnos.tlAnnotationsHere.add(sceneAnno);
+    return isNewAnnotation;
+  }
+
+  @Override
+  public boolean addClassDeclarationAnnotation(TypeElement classElt, AnnotationMirror anno) {
+    if (!ElementUtils.isElementFromSourceCode(classElt)) {
+      return false;
+    }
+
+    AClass classAnnos =
+        getClassAnnos(
+            classElt.getSimpleName().toString(),
+            getFileForElement(classElt),
+            (ClassSymbol) classElt);
+
+    scenelib.annotations.Annotation sceneAnno =
+        AnnotationConverter.annotationMirrorToAnnotation(anno);
+
+    boolean isNewAnnotation = classAnnos.tlAnnotationsHere.add(sceneAnno);
+    return isNewAnnotation;
+  }
+
   /**
    * Write all modified scenes into files. (Scenes are modified by the method {@link
    * #updateAnnotationSetInScene}.)
@@ -409,8 +462,11 @@ public class WholeProgramInferenceScenesStorage
    * @return the path to the .jaif file
    */
   protected String getJaifPath(String className) {
-    String jaifPath = JAIF_FILES_PATH + className + ".jaif";
-    return jaifPath;
+    StringBuilder sb = new StringBuilder();
+    sb.append(JAIF_FILES_PATH);
+    sb.append(className);
+    sb.append(".jaif");
+    return sb.toString();
   }
 
   /**
