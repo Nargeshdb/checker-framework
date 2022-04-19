@@ -1,5 +1,7 @@
 import org.checkerframework.checker.mustcall.qual.MustCall;
+import org.checkerframework.checker.mustcall.qual.MustCallAlias;
 import org.checkerframework.checker.calledmethods.qual.CalledMethods;
+import org.checkerframework.dataflow.qual.Pure;
 import org.checkerframework.checker.mustcall.qual.Owning;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
@@ -15,6 +17,13 @@ import org.checkerframework.framework.qual.AnnotatedFor;
 
   @MustCallAlias
   CheckFields(@MustCallAlias CheckFields.Foo f);
+
+  @MustCallAlias
+  @Pure
+  @CalledMethods({}) CheckFields.Foo returnFoo(@MustCallAlias @CalledMethods({}) CheckFields.Foo f);
+
+  @org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods(value={"this"}, methods={"returnFoo"})
+  @CalledMethods({}) CheckFields.Foo mcaTest(CheckFields.Foo f);
 
   @CalledMethods({}) CheckFields.Foo makeFoo();
 

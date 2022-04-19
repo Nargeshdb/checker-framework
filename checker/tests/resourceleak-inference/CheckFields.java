@@ -9,6 +9,15 @@ class CheckFields {
     this.checkFieldsFoo = f;
   }
 
+  public Foo returnFoo(Foo f) {
+    return f;
+  }
+
+  public Foo mcaTest(Foo f) {
+    Foo f1 = returnFoo(f);
+    return f1;
+  }
+
   @EnsuresCalledMethods(
       value = {"this.checkFieldsFoo"},
       methods = {"a"})
