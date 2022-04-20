@@ -209,14 +209,24 @@ public class MustCallInferenceLogic {
     if (cfg.getUnderlyingAST().getKind() == UnderlyingAST.Kind.METHOD) {
       MethodTree method = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
       Set<Obligation> result = new LinkedHashSet<>(1);
-      for (VariableTree param : method.getParameters()) {
+      for (int i = 0; i < method.getParameters().size(); i++) {
+        VariableTree param = method.getParameters().get(i);
         Element paramElement = TreeUtils.elementFromDeclaration(param);
-        if (rTypeFactory.declaredTypeHasMustCall(param)
-            && paramElement.getAnnotation(Owning.class) == null
-            && !rTypeFactory.hasMustCallAlias(paramElement)) {
-          result.add(
-              new Obligation(
-                  ImmutableSet.of(new ResourceAlias(new LocalVariable(paramElement), param))));
+        if (!rTypeFactory.hasMustCallAlias(paramElement)
+            && paramElement.getAnnotation(Owning.class) == null) {
+          if (rTypeFactory.declaredTypeHasMustCall(param)) {
+            result.add(
+                new Obligation(
+                    ImmutableSet.of(new ResourceAlias(new LocalVariable(paramElement), param))));
+          }
+        } else {
+          if (rTypeFactory.hasMustCallAlias(paramElement)) {
+            addMustCallAlias(TreeUtils.elementFromDeclaration(method), i);
+          } else {
+            ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
+            WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+            wpi.addDeclarationAnnotationToFormalParameter(methodElt, i, OWNING);
+          }
         }
       }
       return result;

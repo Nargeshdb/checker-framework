@@ -6,7 +6,7 @@ import org.checkerframework.checker.mustcall.qual.Owning;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
 @AnnotatedFor("org.checkerframework.checker.resourceleak.ResourceLeakChecker")
-@MustCall("checkFieldsFinalizer") class CheckFields {
+class CheckFields {
 
   // fields:
 

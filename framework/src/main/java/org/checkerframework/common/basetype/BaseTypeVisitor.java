@@ -268,7 +268,7 @@ public class BaseTypeVisitor<Factory extends GenericAnnotatedTypeFactory<?, ?, ?
     unusedWhenElement = TreeUtils.getMethod(Unused.class, "when", 0, env);
     showchecks = checker.hasOption("showchecks");
     infer = checker.hasOption("infer");
-    suggestPureMethods = checker.hasOption("suggestPureMethods") || infer;
+    suggestPureMethods = checker.hasOption("suggestPureMethods");
     checkPurity = checker.hasOption("checkPurityAnnotations") || suggestPureMethods;
   }
 
