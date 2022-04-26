@@ -368,6 +368,7 @@ public class MustCallInferenceLogic {
         && lhsElement.getKind() == ElementKind.FIELD
         && TreeUtils.isConstructor(method)) {
       if (rTypeFactory.getDeclAnnotation(lhsElement, Owning.class) != null) {
+        owningFields.add(lhsElement);
         Set<ResourceAlias> rhsAliases = rhsObligation.resourceAliases;
         for (ResourceAlias rl : rhsAliases) {
           Element rhdElt = rl.reference.getElement();
