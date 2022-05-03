@@ -1,0 +1,26 @@
+import org.checkerframework.checker.mustcall.qual.MustCall;
+import org.checkerframework.checker.calledmethods.qual.CalledMethods;
+import org.checkerframework.checker.mustcall.qual.Owning;
+import org.checkerframework.framework.qual.AnnotatedFor;
+
+package inference;
+@AnnotatedFor("org.checkerframework.checker.resourceleak.ResourceLeakChecker")
+@MustCall("close") class SimpleServerRpcConnection {
+
+  // fields:
+
+  @Owning
+  @CalledMethods({}) java.nio.channels.SocketChannel channel;
+
+  @Owning
+  @CalledMethods({}) java.net.Socket socket;
+
+  // methods:
+
+  @org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods(value={"this.channel"}, methods={"close"})
+  void close(@CalledMethods({}) SimpleServerRpcConnection this);
+
+  @org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods(value={"#1"}, methods={"socket"})
+  SimpleServerRpcConnection(java.nio.channels.SocketChannel channel, long lastContact);
+
+}

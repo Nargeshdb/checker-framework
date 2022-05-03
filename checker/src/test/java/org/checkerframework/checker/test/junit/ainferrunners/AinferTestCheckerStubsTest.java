@@ -26,6 +26,7 @@ public class AinferTestCheckerStubsTest extends AinferGeneratePerDirectoryTest {
         "ainfer-testchecker/non-annotated",
         "-Anomsgtext",
         "-Ainfer=stubs",
+        "-Astubs=tests/ainfer-testchecker/input-annotation-files/ExistingPurityAnnotations-org.checkerframework.checker.testchecker.ainfer.AinferTestChecker.astub",
         "-Awarns");
     // Do not typecheck the file all-systems/java8/memberref/Purity.java: it contains
     // an expected error that will be issued as a warning, instead (because of -Awarns).

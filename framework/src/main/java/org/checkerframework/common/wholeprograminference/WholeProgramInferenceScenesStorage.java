@@ -424,7 +424,7 @@ public class WholeProgramInferenceScenesStorage
 
     AClass classAnnos =
         getClassAnnos(
-            classElt.getSimpleName().toString(),
+            classElt.getQualifiedName().toString(),
             getFileForElement(classElt),
             (ClassSymbol) classElt);
 
