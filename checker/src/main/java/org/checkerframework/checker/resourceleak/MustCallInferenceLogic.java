@@ -555,8 +555,15 @@ public class MustCallInferenceLogic {
         builder.setValue("value", methodArray);
         ClassTree classTree = TreePathUtil.enclosingClass(rTypeFactory.getPath(enMethod));
         TypeElement typeElement = TreeUtils.elementFromDeclaration(classTree);
-        WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-        wpi.addClassDeclarationAnnotation(typeElement, builder.build());
+        if (rTypeFactory.getMustCallValue(typeElement).isEmpty()) {
+          WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+          wpi.addClassDeclarationAnnotation(typeElement, builder.build());
+        } else {
+          builder = new AnnotationBuilder(rTypeFactory.getProcessingEnv(), MustCall.class);
+          builder.setValue("value", rTypeFactory.getMustCallValue(typeElement));
+          WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+          wpi.addClassDeclarationAnnotation(typeElement, builder.build());
+        }
       }
     }
   }
