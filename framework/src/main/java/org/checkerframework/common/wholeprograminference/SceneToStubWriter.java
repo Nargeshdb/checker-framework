@@ -679,6 +679,16 @@ public final class SceneToStubWriter {
             throw new BugInCF("error writing file during WPI: " + filename);
           }
 
+          String pkg = packagePart(clazz);
+
+          StringBuilder sb = new StringBuilder();
+          if (pkg != null) {
+            sb.append("package ");
+            sb.append(pkg);
+            sb.append(";");
+            printWriter.println(sb);
+          }
+
           // Write out all imports
           ImportDefWriter importDefWriter;
           try {
@@ -746,15 +756,15 @@ public final class SceneToStubWriter {
     String basename = basenamePart(classname);
     String innermostClassname =
         basename.contains("$") ? basename.substring(basename.lastIndexOf('$') + 1) : basename;
-    String pkg = packagePart(classname);
-
-    StringBuilder sb = new StringBuilder();
-    if (pkg != null) {
-      sb.append("package ");
-      sb.append(pkg);
-      sb.append(";");
-      printWriter.println(sb);
-    }
+    //    String pkg = packagePart(classname);
+    //
+    //    StringBuilder sb = new StringBuilder();
+    //    if (pkg != null) {
+    //      sb.append("package ");
+    //      sb.append(pkg);
+    //      sb.append(";");
+    //      printWriter.println(sb);
+    //    }
 
     int curlyCount = printClassDefinitions(basename, aClass, printWriter, checker);
 
@@ -766,7 +776,7 @@ public final class SceneToStubWriter {
       for (VariableElement enumConstant : enumConstants) {
         sj.add(enumConstant.getSimpleName());
       }
-      sb = new StringBuilder();
+      StringBuilder sb = new StringBuilder();
       sb.append(indentLevel);
       sb.append("// enum constants:");
       printWriter.println(sb);
@@ -784,7 +794,7 @@ public final class SceneToStubWriter {
 
     if (!aClass.getMethods().isEmpty()) {
       // print method signatures
-      sb = new StringBuilder();
+      StringBuilder sb = new StringBuilder();
       sb.append(indentLevel);
       sb.append("// methods:");
       printWriter.println(sb);
@@ -799,7 +809,7 @@ public final class SceneToStubWriter {
       }
     }
     for (int i = 0; i < curlyCount; i++) {
-      sb = new StringBuilder();
+      StringBuilder sb = new StringBuilder();
       sb.append(indents(curlyCount - i - 1));
       sb.append("}");
       printWriter.println(sb);

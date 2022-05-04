@@ -1,9 +1,9 @@
+package inference;
 import org.checkerframework.checker.mustcall.qual.MustCall;
 import org.checkerframework.checker.calledmethods.qual.CalledMethods;
 import org.checkerframework.checker.mustcall.qual.Owning;
 import org.checkerframework.framework.qual.AnnotatedFor;
 
-package inference;
 @AnnotatedFor("org.checkerframework.checker.resourceleak.ResourceLeakChecker")
 @MustCall("close") class SimpleServerRpcConnection {
 
