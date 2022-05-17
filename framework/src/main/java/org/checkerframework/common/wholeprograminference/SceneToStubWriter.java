@@ -371,11 +371,9 @@ public final class SceneToStubWriter {
           openCount--;
         }
       }
-
-      StringBuilder sb = new StringBuilder();
-      sb.append(basetypeToPrint.substring(0, basetypeToPrint.indexOf('<')));
-      sb.append(basetypeToPrint.substring(pos + 1));
-      basetypeToPrint = sb.toString();
+      basetypeToPrint =
+          basetypeToPrint.substring(0, basetypeToPrint.indexOf('<'))
+              + basetypeToPrint.substring(pos + 1);
     }
 
     // An array is not a receiver, so using the javacType to check for arrays is safe.

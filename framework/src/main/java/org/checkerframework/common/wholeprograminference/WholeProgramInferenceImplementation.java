@@ -243,14 +243,11 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
         // Until that bug is fixed, do not attempt to infer information about varargs parameters
         // in JAIF mode.
         if (showWpiFailedInferences) {
-          StringBuilder sb = new StringBuilder();
-          sb.append(
-              "Annotations cannot be placed on varargs parameters in -Ainfer=jaifs mode, because");
-          sb.append(" the JAIF format does not correctly support it.\n");
-          sb.append("The signature of the method whose varargs parameter was not annotated is: ");
-          sb.append(JVMNames.getJVMMethodSignature(methodElt));
-
-          printFailedInferenceDebugMessage(sb.toString());
+          printFailedInferenceDebugMessage(
+              "Annotations cannot be placed on varargs parameters in -Ainfer=jaifs mode, because"
+                  + " the JAIF format does not correctly support it.\n"
+                  + "The signature of the method whose varargs parameter was not annotated is: "
+                  + JVMNames.getJVMMethodSignature(methodElt));
         }
         return;
       }
@@ -283,8 +280,8 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
               printFailedInferenceDebugMessage(
                   "Javac cannot create an array type "
                       + "from a wildcard, so WPI did not attempt to infer a type for an array "
-                      + "parameter. The signature of the method whose parameter had inference "
-                      + "skipped is: "
+                      + "parameter.\n"
+                      + "The signature of the method whose parameter had inference skipped is: "
                       + JVMNames.getJVMMethodSignature(methodElt));
             }
             return;
