@@ -203,6 +203,10 @@ import org.plumelib.util.UtilPlume;
   // "-Ainfer=stubs" or "-Ainfer=jaifs".
   "infer",
 
+  // Whether to output a copy of each file for which annotations were inferred, formatted
+  // as an ajava file. Can only be used with -Ainfer=ajava
+  "inferOutputOriginal",
+
   // With each warning, in addition to the concrete error key,
   // output the SuppressWarnings strings that can be used to
   // suppress that warning.
@@ -246,6 +250,7 @@ import org.plumelib.util.UtilPlume;
   // that were not found on the class path
   // org.checkerframework.framework.stub.AnnotationFileParser.warnIfNotFound
   "stubWarnIfNotFound",
+  "stubNoWarnIfNotFound",
   // Whether to ignore missing classes even when warnIfNotFound is set to true and other classes
   // from the same package are present (useful if a package spans more than one jar).
   // org.checkerframework.framework.stub.AnnotationFileParser.warnIfNotFoundIgnoresClasses

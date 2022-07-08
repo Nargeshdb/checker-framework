@@ -1,15 +1,41 @@
-Version 3.22.1 (June 1, 2022)
----------------------------------
+Version 3.23.0 (July 1, 2022)
+-----------------------------
 
 **User-visible changes:**
+
+By default, command-line argument `-AstubWarnIfNotFound` is treated as true
+for stub files provided on the command line and false for built-in stub
+files.  Use `-AstubWarnIfNotFound` to enable it for all stub files, and use
+new `-AstubNoWarnIfNotFound` to disable it for all stub files.
+
+New command-line argument `-ApermitStaticOwning` suppresses Resource Leak
+Checker warnings related to static owning fields.
+
+New command-line argument `-ApermitInitializationLeak` suppresses Resource Leak
+Checker warnings related to field initialization.
 
 **Implementation details:**
 
 **Closed issues:**
 
 
+Version 3.22.2 (June 14, 2022)
+------------------------------
+
+**Implementation details:**
+
+Expose CFG APIs to allow inserting jumps and throws
+
+
+Version 3.22.1 (June 1, 2022)
+-----------------------------
+
+**Closed issues:**
+#58, #5136, #5138, #5142, #5143.,
+
+
 Version 3.22.0 (May 2, 2022)
----------------------------------
+----------------------------
 
 **User-visible changes:**
 
@@ -31,14 +57,14 @@ annotations, they are copied to the anonymous classes constructor.
 
 
 Version 3.21.4 (April 1, 2022)
----------------------------------
+------------------------------
 
 **Closed issues:**
 #5086.
 
 
 Version 3.21.3 (March 1, 2022)
----------------------------------
+------------------------------
 
 **Closed issues:**
 #2847, #4965, #5039, #5042, #5047.
