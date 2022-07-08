@@ -1,0 +1,27 @@
+package inference;
+
+import org.checkerframework.checker.mustcall.qual.MustCall;
+import org.checkerframework.checker.calledmethods.qual.CalledMethods;
+import org.checkerframework.checker.mustcall.qual.Owning;
+import org.checkerframework.framework.qual.AnnotatedFor;
+
+@AnnotatedFor("org.checkerframework.checker.resourceleak.ResourceLeakChecker")
+@MustCall("finalizer") class TwoMCAOnFormalParam {
+
+  // fields:
+
+  @Owning
+  @CalledMethods({}) TwoMCAOnFormalParam.Foo foo1;
+
+  @Owning
+  @CalledMethods({}) TwoMCAOnFormalParam.Foo foo2;
+
+  // methods:
+
+  TwoMCAOnFormalParam(@CalledMethods({}) TwoMCAOnFormalParam.Foo f1,@CalledMethods({})  TwoMCAOnFormalParam.Foo f2);
+
+  @org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods(value={"this.foo1"}, methods={"a"})
+  @org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods(value={"this.foo2"}, methods={"a"})
+  void finalizer();
+
+}

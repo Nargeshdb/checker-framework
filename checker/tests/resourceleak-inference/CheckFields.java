@@ -1,7 +1,6 @@
 // import org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods;
 // import org.checkerframework.checker.mustcall.qual.MustCall;
 //// @MustCall("a")
-//
 // class CheckFields {
 //  final Foo checkFieldsFoo;
 //
