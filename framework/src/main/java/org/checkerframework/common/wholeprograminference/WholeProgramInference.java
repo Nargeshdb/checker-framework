@@ -193,7 +193,7 @@ public interface WholeProgramInference {
    * @param fieldElt the field to annotate
    * @param anno the declaration annotation to add to the method
    */
-  void addFieldDeclarationAnnotation(Element fieldElt, AnnotationMirror anno);
+  void addFieldDeclarationAnnotation(VariableElement fieldElt, AnnotationMirror anno);
 
   void addDeclarationAnnotationToFormalParameter(
       ExecutableElement methodElt, int index, AnnotationMirror anno);
@@ -234,7 +234,7 @@ public interface WholeProgramInference {
 
     /**
      * Output the results of whole-program inference as an ajava file that can be read in using the
-     * -Aajava option.
+     * {@code -Aajava} option.
      */
     AJAVA(),
   }

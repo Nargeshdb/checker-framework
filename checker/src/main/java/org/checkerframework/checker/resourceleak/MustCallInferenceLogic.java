@@ -73,7 +73,7 @@ public class MustCallInferenceLogic {
   protected final AnnotationMirror MUSTCALLALIAS;
 
   /** The set of owning fields. */
-  private Set<Element> owningFields = new HashSet<>();
+  private Set<VariableElement> owningFields = new HashSet<>();
 
   /** The control flow graph. */
   private ControlFlowGraph cfg;
@@ -211,7 +211,7 @@ public class MustCallInferenceLogic {
       Set<Obligation> result = new LinkedHashSet<>(1);
       for (int i = 0; i < method.getParameters().size(); i++) {
         VariableTree param = method.getParameters().get(i);
-        Element paramElement = TreeUtils.elementFromDeclaration(param);
+        VariableElement paramElement = TreeUtils.elementFromDeclaration(param);
         if (!rTypeFactory.hasMustCallAlias(paramElement)
             && paramElement.getAnnotation(Owning.class) == null) {
           if (rTypeFactory.declaredTypeHasMustCall(param)) {
@@ -352,7 +352,7 @@ public class MustCallInferenceLogic {
   private void updateObligationsForAssignment(
       Set<Obligation> obligations, AssignmentNode assignmentNode) {
     Node lhs = assignmentNode.getTarget();
-    Element lhsElement = TreeUtils.elementFromTree(lhs.getTree());
+    VariableElement lhsElement = TreeUtils.variableElementFromTree(lhs.getTree());
     // Use the temporary variable for the rhs if it exists.
     Node rhs = NodeUtils.removeCasts(assignmentNode.getExpression());
     rhs = getTempVarOrNode(rhs);
@@ -483,9 +483,9 @@ public class MustCallInferenceLogic {
 
       Node receiverTmpVar = getTempVarOrNode(receiver);
 
-      Element method = TreeUtils.elementFromTree(mNode.getTree());
+      Element method = TreeUtils.elementFromUse(mNode.getTree());
 
-      Element receiverEl = TreeUtils.elementFromTree(receiver.getTree());
+      VariableElement receiverEl = TreeUtils.variableElementFromTree(receiver.getTree());
 
       if (receiverEl != null) {
         mustCallValues = rTypeFactory.getMustCallValue(receiverEl);
@@ -592,7 +592,7 @@ public class MustCallInferenceLogic {
         WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
 
         assert wpi != null : "MustCallInference is running without WPI.";
-        for (Element fieldElt : owningFields) {
+        for (VariableElement fieldElt : owningFields) {
           wpi.addFieldDeclarationAnnotation(fieldElt, OWNING);
         }
       }

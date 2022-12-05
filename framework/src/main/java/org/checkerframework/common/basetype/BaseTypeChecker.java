@@ -226,6 +226,7 @@ public abstract class BaseTypeChecker extends SourceChecker {
    * @return the type-checking visitor
    */
   @Override
+  @SuppressWarnings("mustcall:return") // generics problem
   protected BaseTypeVisitor<?> createSourceVisitor() {
     // Try to reflectively load the visitor.
     Class<?> checkerClass = this.getClass();
@@ -605,6 +606,7 @@ public abstract class BaseTypeChecker extends SourceChecker {
     Set<Element> elementsWithSuppressedWarnings =
         new HashSet<>(this.elementsWithSuppressedWarnings);
     this.elementsWithSuppressedWarnings.clear();
+
     Set<String> prefixes = new HashSet<>(getSuppressWarningsPrefixes());
     Set<String> errorKeys = new HashSet<>(messagesProperties.stringPropertyNames());
     for (BaseTypeChecker subChecker : subcheckers) {
@@ -806,7 +808,8 @@ public abstract class BaseTypeChecker extends SourceChecker {
       }
 
       options.addAll(
-          expandCFOptions(Arrays.asList(this.getClass()), options.toArray(new String[0])));
+          expandCFOptions(
+              Arrays.asList(this.getClass()), options.toArray(new String[options.size()])));
 
       supportedOptions = Collections.unmodifiableSet(options);
     }

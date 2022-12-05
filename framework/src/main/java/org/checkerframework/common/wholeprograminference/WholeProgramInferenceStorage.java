@@ -146,7 +146,7 @@ public interface WholeProgramInferenceStorage<T> {
    * @return true if {@code anno} is a new declaration annotation for {@code fieldElt}, false
    *     otherwise
    */
-  public boolean addFieldDeclarationAnnotation(Element fieldElt, AnnotationMirror anno);
+  public boolean addFieldDeclarationAnnotation(VariableElement fieldElt, AnnotationMirror anno);
 
   boolean addDeclarationAnnotationToFormalParameter(
       ExecutableElement methodElt, int index, AnnotationMirror anno);

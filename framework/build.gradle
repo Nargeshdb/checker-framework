@@ -43,8 +43,8 @@ dependencies {
     // External dependencies:
     // If you add an external dependency, you must shadow its packages.
     // See the comment in ../build.gradle in the shadowJar block.
-    implementation 'org.plumelib:plume-util:1.5.8'
-    implementation 'org.plumelib:reflection-util:1.0.4'
+    implementation "org.plumelib:plume-util:${plumeUtilVersion}"
+    implementation "org.plumelib:reflection-util:${reflectionUtilVersion}"
     implementation 'io.github.classgraph:classgraph:4.8.149'
 
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
@@ -208,11 +208,21 @@ task delombok {
     dependsOn project(':checker-qual').tasks.jar
 
     doLast {
+      // As of 2022-11-30, delombok crashes under JDK 19.
+      if(!skipDelombok) {
         def collection = files(configurations.testCompileClasspath)
         ant.taskdef(name: 'delombok', classname: 'lombok.delombok.ant.Tasks$Delombok',
-                classpath: collection.asPath)
+            classpath: collection.asPath)
         ant.delombok(from: srcJava, to: srcDelomboked, classpath: collection.asPath)
+      }
     }
 }
 
-tasks.test.dependsOn("delombok")
+if (skipDelombok) {
+    delombok.enabled = false
+    test {
+        exclude '**/ReturnsReceiverLombokTest.java'
+    }
+} else {
+    tasks.test.dependsOn("delombok")
+}
