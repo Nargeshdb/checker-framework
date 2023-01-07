@@ -6,12 +6,12 @@ class Inference {
     void a() {}
   }
 
-  @InheritableMustCall("dispose")
   static class OwningField {
-    final Foo f;
+    Foo f; // expect owning annotation for this field
 
-    OwningField(Foo foo) {
-      f = foo;
+    void OwningField() {
+      // :: warning: (required.method.not.called)
+      f = new Foo();
     }
     void dispose() {
       f.a();

@@ -36,7 +36,6 @@ import org.checkerframework.framework.flow.CFStore;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.GenericAnnotatedTypeFactory;
 import org.checkerframework.javacutil.AnnotationUtils;
-import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.TreeUtils;
 import org.checkerframework.javacutil.TypeSystemError;
 
@@ -95,16 +94,14 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
   }
 
   /**
-   * Is the given element a candidate to be an owning field? A candidate owning field must be final
-   * and have a non-empty must-call obligation.
+   * Is the given element a candidate to be an owning field? A candidate owning field must have a
+   * non-empty must-call obligation.
    *
    * @param element a element
    * @return true iff the given element is a final field with non-empty @MustCall obligation
    */
   boolean isCandidateOwningField(Element element) {
-    return (element.getKind().isField()
-        && ElementUtils.isFinal(element)
-        && !getMustCallValue(element).isEmpty());
+    return (element.getKind().isField() && !getMustCallValue(element).isEmpty());
   }
 
   @Override
