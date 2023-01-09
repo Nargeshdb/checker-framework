@@ -8,8 +8,14 @@ class OwningParams {
   }
 
   private class OwningParamsDirectCall {
-    void owningFoo(Foo f) {
+    void passOwnership(Foo f) {
       f.a();
+    }
+
+    void passOwnershipTest() {
+      // :: warning: (required.method.not.called)
+      Foo f = new Foo();
+      passOwnership(f);
     }
   }
 
@@ -23,9 +29,17 @@ class OwningParams {
       f.a();
     }
 
-    void owningFooCaller(Foo f1, Foo f2) {
+    void passOwnership(Foo f1, Foo f2) {
       hasECM(f1);
       owningFoo(f2);
+    }
+
+    void passOwnershipTest() {
+      // :: warning: (required.method.not.called)
+      Foo f1 = new Foo();
+      // :: warning: (required.method.not.called)
+      Foo f2 = new Foo();
+      passOwnership(f1, f2);
     }
   }
 }

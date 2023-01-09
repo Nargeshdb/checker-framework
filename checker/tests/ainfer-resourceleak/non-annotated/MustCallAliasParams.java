@@ -48,6 +48,13 @@ class MustCallAliasParams {
     }
   }
 
+  void mCASuperCallTest() {
+    // :: warning: (required.method.not.called)
+    Foo f = new Foo();
+    MCASuperCall mcaSuperCall = new MCASuperCall(f);
+    mcaSuperCall.dispose();
+  }
+
   private class MCAThisCall extends MCASuperClass {
     @MustCallAlias MCAThisCall(@MustCallAlias Foo foo) {
       super(foo);
@@ -55,6 +62,13 @@ class MustCallAliasParams {
     MCAThisCall(Foo foo, boolean b) {
       this(foo);
     }
+  }
+
+  void mCAThisCallTest() {
+    // :: warning: (required.method.not.called)
+    Foo f = new Foo();
+    MCAThisCall mcaThisCall = new MCAThisCall(f, true);
+    mcaThisCall.dispose();
   }
 
   private class MCAMethod {
