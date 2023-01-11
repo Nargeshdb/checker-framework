@@ -7,17 +7,17 @@ class MustCallAliasParams {
     void a() {}
   }
 
-  @InheritableMustCall("dispose")
+  @InheritableMustCall("a")
   private class MCAConstructor {
 
-    // :: warning: (required.method.not.called)
     final @Owning Foo f; // expect owning annotation for this field
 
     MCAConstructor(Foo foo) {
       f = foo;
     }
 
-    public void dispose() {
+    @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
+    public void a() {
       f.a();
     }
   }
@@ -26,10 +26,10 @@ class MustCallAliasParams {
     // :: warning: (required.method.not.called)
     Foo f = new Foo();
     MCAConstructor mcac = new MCAConstructor(f);
-    mcac.dispose();
+    mcac.a();
   }
 
-  @InheritableMustCall("dispose")
+  @InheritableMustCall("a")
   private class MCASuperClass {
     final @Owning Foo f;
     @MustCallAlias MCASuperClass(@MustCallAlias Foo foo) {
@@ -37,7 +37,7 @@ class MustCallAliasParams {
     }
 
     @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
-    public void dispose() {
+    public void a() {
       f.a();
     }
   }
@@ -52,7 +52,7 @@ class MustCallAliasParams {
     // :: warning: (required.method.not.called)
     Foo f = new Foo();
     MCASuperCall mcaSuperCall = new MCASuperCall(f);
-    mcaSuperCall.dispose();
+    mcaSuperCall.a();
   }
 
   private class MCAThisCall extends MCASuperClass {
@@ -68,7 +68,7 @@ class MustCallAliasParams {
     // :: warning: (required.method.not.called)
     Foo f = new Foo();
     MCAThisCall mcaThisCall = new MCAThisCall(f, true);
-    mcaThisCall.dispose();
+    mcaThisCall.a();
   }
 
   private class MCAMethod {
@@ -115,6 +115,7 @@ class MustCallAliasParams {
     }
 
     // We expect @MustCallAlias for foo even if it's not returned on all paths
+    @SuppressWarnings("mustcallalias.out.of.scope")
     Foo returnFooSomePath(Foo foo) {
       if (true) {
         Foo f = new Foo();

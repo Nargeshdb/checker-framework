@@ -1,4 +1,5 @@
 import org.checkerframework.checker.mustcall.qual.*;
+import org.checkerframework.checker.calledmethods.qual.*;
 class OwningField {
 
   @InheritableMustCall("a")
@@ -13,23 +14,28 @@ class OwningField {
       // :: warning: (required.method.not.called)
       f = new Foo();
     }
-    void dispose() {
-      if (true) {
-        f.a();
-      }
-    }
-  }
 
-  static class NonFinalOwningField {
-    Foo f; // expect owning annotation for this field
-
-    void initialyzeFoo() {
-      // :: warning: (required.method.not.called)
-      f = new Foo();
-    }
-
+    @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
     void dispose() {
       f.a();
     }
   }
+
+  @InheritableMustCall("dispose")
+  static class NonFinalOwningField {
+    Foo f; // expect owning annotation for this field
+
+    @SuppressWarnings("missing.creates.mustcall.for")
+    void initialyzeFoo() {
+      f.a();
+      // :: warning: (required.method.not.called)
+      f = new Foo();
+    }
+
+    @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
+    void dispose() {
+      f.a();
+    }
+  }
+
 }

@@ -9,24 +9,16 @@ class CreatesMustCallFor {
 
   @InheritableMustCall("a")
   static class NonFinalOwningField {
-    // :: warning: (required.method.not.called)
     @Owning Foo f; // expect owning annotation for this field
 
-    // :: warning: (missing.creates.mustcall.for)
-    void initialyzeFooWithCMCF() {
-      // :: warning: (required.method.not.called)
-      f = new Foo();
-    }
-
-    //
     // :: warning: (missing.creates.mustcall.for)
     void initialyzeFooWithoutCMCF() {
       f.a();
       f = new Foo();
-      f.a();
     }
 
-    void dispose() {
+    @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
+    void a() {
       f.a();
     }
   }

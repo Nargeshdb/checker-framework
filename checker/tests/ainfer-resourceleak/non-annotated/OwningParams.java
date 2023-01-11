@@ -21,16 +21,16 @@ class OwningParams {
 
   private class OwningParamsIndirectCall {
     @EnsuresCalledMethods(value = { "#1" }, methods = { "a" })
-    void hasECM(Foo f) {
+    void hasECM(@MustCall("a") Foo f) {
       f.a();
     }
 
-    void owningFoo(@Owning Foo f) {
+    void owningFoo(@Owning @MustCall("a") Foo f) {
       f.a();
     }
 
-    void passOwnership(Foo f1, Foo f2) {
-      hasECM(f1);
+    void passOwnership(Foo f111, Foo f2) {
+      hasECM(f111);
       owningFoo(f2);
     }
 

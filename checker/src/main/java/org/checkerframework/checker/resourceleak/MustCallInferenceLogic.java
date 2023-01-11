@@ -648,10 +648,11 @@ public class MustCallInferenceLogic {
     for (int i = 0; i < paramsOfEnclosingMethod.size(); i++) {
       VariableElement paramElt = TreeUtils.elementFromDeclaration(paramsOfEnclosingMethod.get(i));
       mustCallValues = rTypeFactory.getMustCallValue(paramElt);
-      if (mustCallValues.size() >= 1) {
+      if (mustCallValues.size() > 1) {
         // TODO: generalize this to MustCall annotations with more than one element.
         return;
       }
+
       CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
       JavaExpression target = JavaExpression.fromVariableTree(paramsOfEnclosingMethod.get(i));
       CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
@@ -673,6 +674,7 @@ public class MustCallInferenceLogic {
       AnnotationMirror cmAnnoForMustCallMethods =
           rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
       if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+
         addOwningOnParams(methodElt, i);
       }
     }
@@ -732,7 +734,7 @@ public class MustCallInferenceLogic {
           if (nonFinalFieldsMap.get(ve)) {
             AnnotationBuilder builder =
                 new AnnotationBuilder(rTypeFactory.getProcessingEnv(), CreatesMustCallFor.class);
-            builder.setValue("value", ve.getSimpleName().toString());
+            //            builder.setValue("value", ve.getSimpleName().toString());
             AnnotationMirror am = builder.build();
             MethodTree method = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
             ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
