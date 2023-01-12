@@ -256,6 +256,9 @@ public class WholeProgramInferenceImplementation<T> implements WholeProgramInfer
       AnnotatedTypeMirror receiverArgATM = atypeFactory.getReceiverType(invocationTree);
       AnnotatedExecutableType methodDeclType = atypeFactory.getAnnotatedType(methodElt);
       AnnotatedTypeMirror receiverParamATM = methodDeclType.getReceiverType();
+      if (receiverParamATM == null) {
+        return;
+      }
       atypeFactory.wpiAdjustForUpdateNonField(receiverArgATM);
       T receiverAnnotations =
           storage.getReceiverAnnotations(methodElt, receiverParamATM, atypeFactory);
