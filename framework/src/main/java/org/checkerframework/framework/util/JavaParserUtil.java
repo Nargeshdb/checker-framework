@@ -8,6 +8,7 @@ import com.github.javaparser.ParserConfiguration.LanguageLevel;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.StubUnit;
+import com.github.javaparser.ast.body.AnnotationDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
@@ -221,6 +222,11 @@ public class JavaParserUtil {
       return enumDecl.get();
     }
 
+    Optional<AnnotationDeclaration> annoDecl = root.getAnnotationDeclarationByName(name);
+    if (annoDecl.isPresent()) {
+      return annoDecl.get();
+    }
+
     Optional<CompilationUnit.Storage> storage = root.getStorage();
     if (storage.isPresent()) {
       throw new BugInCF("Type " + name + " not found in " + storage.get().getPath());
@@ -296,15 +302,15 @@ public class JavaParserUtil {
     public void visit(BinaryExpr node, Void p) {
       super.visit(node, p);
       if (node.getOperator() == BinaryExpr.Operator.PLUS && node.getRight().isStringLiteralExpr()) {
-        String right = node.getRight().asStringLiteralExpr().asString();
+        String right = node.getRight().asStringLiteralExpr().getValue();
         if (node.getLeft().isStringLiteralExpr()) {
-          String left = node.getLeft().asStringLiteralExpr().asString();
+          String left = node.getLeft().asStringLiteralExpr().getValue();
           node.replace(new StringLiteralExpr(left + right));
         } else if (node.getLeft().isBinaryExpr()) {
           BinaryExpr leftExpr = node.getLeft().asBinaryExpr();
           if (leftExpr.getOperator() == BinaryExpr.Operator.PLUS
               && leftExpr.getRight().isStringLiteralExpr()) {
-            String left = leftExpr.getRight().asStringLiteralExpr().asString();
+            String left = leftExpr.getRight().asStringLiteralExpr().getValue();
             node.replace(
                 new BinaryExpr(
                     leftExpr.getLeft(),
