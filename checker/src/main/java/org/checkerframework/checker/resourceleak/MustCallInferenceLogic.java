@@ -362,7 +362,7 @@ public class MustCallInferenceLogic {
       Map<VariableElement, Boolean> nonFinalFieldsMap,
       AssignmentNode assignmentNode) {
     Node lhs = assignmentNode.getTarget();
-    VariableElement lhsElement = TreeUtils.variableElementFromTree(lhs.getTree());
+    Element lhsElement = TreeUtils.elementFromTree(lhs.getTree());
     // Use the temporary variable for the rhs if it exists.
     Node rhs = NodeUtils.removeCasts(assignmentNode.getExpression());
     rhs = getTempVarOrNode(rhs);
@@ -374,7 +374,7 @@ public class MustCallInferenceLogic {
         return;
       }
 
-      owningFields.add(lhsElement);
+      owningFields.add((VariableElement) lhsElement);
       if (TreeUtils.isConstructor(method)) {
         if (!(rhs instanceof LocalVariableNode)) {
           return;
@@ -399,7 +399,7 @@ public class MustCallInferenceLogic {
         }
       } else if (!ElementUtils.isFinal(lhsElement)) {
         if (!nonFinalFieldsMap.containsKey(lhsElement) || !nonFinalFieldsMap.get(lhsElement)) {
-          nonFinalFieldsMap.put(lhsElement, true);
+          nonFinalFieldsMap.put((VariableElement) lhsElement, true);
         }
       }
 
@@ -581,9 +581,9 @@ public class MustCallInferenceLogic {
       return;
     }
 
-    VariableElement receiverEl = TreeUtils.variableElementFromTree(receiver.getTree());
-    if (rTypeFactory.isCandidateOwningField(receiverEl)) {
-      isOwningField(nonFinalFieldsMap, methodElt, receiverEl, mNode);
+    Element receiverEl = TreeUtils.elementFromTree(receiver.getTree());
+    if (receiverEl != null && rTypeFactory.isCandidateOwningField(receiverEl)) {
+      isOwningField(nonFinalFieldsMap, methodElt, (VariableElement) receiverEl, mNode);
     }
 
     Node receiverTmpVar = getTempVarOrNode(receiver);
@@ -693,6 +693,9 @@ public class MustCallInferenceLogic {
       MethodInvocationNode mNode) {
     MethodTree enMethod = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
     ExecutableElement methodElt = TreeUtils.elementFromDeclaration(enMethod);
+    if (methodElt == null) {
+      return;
+    }
     List<? extends VariableTree> paramsOfEnclosingMethod = enMethod.getParameters();
 
     checkArgsOfMethodCall(obligations, methodElt, mNode, paramsOfEnclosingMethod);

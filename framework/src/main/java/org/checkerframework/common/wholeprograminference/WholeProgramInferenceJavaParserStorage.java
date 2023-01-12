@@ -374,6 +374,9 @@ public class WholeProgramInferenceJavaParserStorage
   public boolean addDeclarationAnnotationToFormalParameter(
       ExecutableElement methodElt, int index, AnnotationMirror anno) {
     CallableDeclarationAnnos methodAnnos = getMethodAnnos(methodElt);
+    if (methodAnnos == null) {
+      return false;
+    }
     boolean isNewAnnotation = methodAnnos.addDeclarationAnnotationToFormalParameter(anno, index);
     if (isNewAnnotation) {
       modifiedFiles.add(getFileForElement(methodElt));
