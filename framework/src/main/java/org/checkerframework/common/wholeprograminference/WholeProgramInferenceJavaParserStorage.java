@@ -614,10 +614,12 @@ public class WholeProgramInferenceJavaParserStorage
               ClassTree tree,
               @Nullable @BinaryName String classNameKey,
               @Nullable TypeDeclaration<?> javaParserNode) {
-            String className;
+            String className = null;
             if (classNameKey == null) {
               TypeElement classElt = TreeUtils.elementFromDeclaration(tree);
-              className = ElementUtils.getBinaryName(classElt);
+              if (classElt != null) {
+                className = ElementUtils.getBinaryName(classElt);
+              }
             } else {
               className = classNameKey;
             }
