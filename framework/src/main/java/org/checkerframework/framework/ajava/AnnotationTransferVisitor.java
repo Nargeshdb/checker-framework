@@ -26,7 +26,10 @@ import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedTypeVari
 public class AnnotationTransferVisitor extends VoidVisitorAdapter<AnnotatedTypeMirror> {
   @Override
   public void visit(ArrayType target, AnnotatedTypeMirror type) {
-    target.getComponentType().accept(this, ((AnnotatedArrayType) type).getComponentType());
+//    target.getComponentType().accept(this, ((AnnotatedArrayType) type).getComponentType());
+    if (type.getKind() == TypeKind.ARRAY) {
+      target.getComponentType().accept(this, ((AnnotatedArrayType) type).getComponentType());
+    }
     transferAnnotations(type, target);
   }
 
