@@ -1,5 +1,6 @@
 import org.checkerframework.checker.mustcall.qual.*;
 import org.checkerframework.checker.calledmethods.qual.*;
+
 class OwningField {
 
   @InheritableMustCall("a")
