@@ -28,6 +28,7 @@ import javax.lang.model.element.VariableElement;
 import org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods;
 import org.checkerframework.checker.mustcall.qual.CreatesMustCallFor;
 import org.checkerframework.checker.mustcall.qual.MustCall;
+import org.checkerframework.checker.mustcall.qual.InheritableMustCall;
 import org.checkerframework.checker.mustcall.qual.MustCallAlias;
 import org.checkerframework.checker.mustcall.qual.Owning;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -207,7 +208,7 @@ public class MustCallInferenceLogic {
     OWNING = AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), Owning.class);
     MUSTCALLALIAS =
         AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), MustCallAlias.class);
-    MUSTCALL = AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), MustCall.class);
+    MUSTCALL = AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), InheritableMustCall.class);
   }
 
   private Set<Obligation> getNonEmptyMCParams(ControlFlowGraph cfg) {
@@ -503,7 +504,7 @@ public class MustCallInferenceLogic {
 
   private void addOrUpdateMustCall(MethodTree enMethod) {
     AnnotationBuilder builder =
-        new AnnotationBuilder(rTypeFactory.getProcessingEnv(), MustCall.class);
+        new AnnotationBuilder(rTypeFactory.getProcessingEnv(), InheritableMustCall.class);
     String[] methodArray = new String[] {enMethod.getName().toString()};
     Arrays.sort(methodArray);
     builder.setValue("value", methodArray);
