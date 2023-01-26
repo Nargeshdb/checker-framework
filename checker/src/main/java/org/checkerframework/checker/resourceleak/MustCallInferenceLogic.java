@@ -609,7 +609,7 @@ public class MustCallInferenceLogic {
         }
 
         mustCallValues = rTypeFactory.getMustCallValue(paramElt);
-        if (mustCallValues.size() > 1) {
+        if (mustCallValues.size() > 1 || mustCallValues.size() == 0) {
           // TODO: generalize this to MustCall annotations with more than one element.
           return;
         }
@@ -649,7 +649,7 @@ public class MustCallInferenceLogic {
     for (int i = 0; i < paramsOfEnclosingMethod.size(); i++) {
       VariableElement paramElt = TreeUtils.elementFromDeclaration(paramsOfEnclosingMethod.get(i));
       mustCallValues = rTypeFactory.getMustCallValue(paramElt);
-      if (mustCallValues.size() > 1) {
+      if (mustCallValues.size() > 1 || mustCallValues.size() == 0) {
         // TODO: generalize this to MustCall annotations with more than one element.
         return;
       }
