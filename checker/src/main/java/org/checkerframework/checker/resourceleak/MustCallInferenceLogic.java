@@ -229,7 +229,7 @@ public class MustCallInferenceLogic {
           ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
           if (rTypeFactory.hasMustCallAlias(paramElement)) {
             addMustCallAlias(methodElt, i);
-          } else {
+          } else if (paramElement.getAnnotation(Owning.class) != null) {
             addOwningOnParams(methodElt, i);
           }
         }
@@ -512,12 +512,13 @@ public class MustCallInferenceLogic {
     if (rTypeFactory.getMustCallValue(typeElement).isEmpty()) {
       WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
       wpi.addClassDeclarationAnnotation(typeElement, builder.build());
-    } else {
-      builder = new AnnotationBuilder(rTypeFactory.getProcessingEnv(), MustCall.class);
-      builder.setValue("value", rTypeFactory.getMustCallValue(typeElement));
-      WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-      wpi.addClassDeclarationAnnotation(typeElement, builder.build());
     }
+//    else {
+//      builder = new AnnotationBuilder(rTypeFactory.getProcessingEnv(), MustCall.class);
+//      builder.setValue("value", rTypeFactory.getMustCallValue(typeElement));
+//      WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+//      wpi.addClassDeclarationAnnotation(typeElement, builder.build());
+//    }
   }
 
   private void checkArgsOfMethodCall(

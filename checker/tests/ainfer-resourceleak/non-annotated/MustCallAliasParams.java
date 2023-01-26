@@ -31,9 +31,11 @@ class MustCallAliasParams {
 
   @InheritableMustCall("a")
   private class MCASuperClass {
+    int i;
     final @Owning Foo f;
-    @MustCallAlias MCASuperClass(@MustCallAlias Foo foo) {
+    @MustCallAlias MCASuperClass(@MustCallAlias Foo foo, int i) {
       f = foo;
+      i = i;
     }
 
     @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
@@ -44,7 +46,7 @@ class MustCallAliasParams {
 
   private class MCASuperCall extends MCASuperClass {
     MCASuperCall(Foo foo) {
-      super(foo);
+      super(foo, 1);
     }
   }
 
@@ -57,7 +59,7 @@ class MustCallAliasParams {
 
   private class MCAThisCall extends MCASuperClass {
     @MustCallAlias MCAThisCall(@MustCallAlias Foo foo) {
-      super(foo);
+      super(foo, 1);
     }
     MCAThisCall(Foo foo, boolean b) {
       this(foo);
