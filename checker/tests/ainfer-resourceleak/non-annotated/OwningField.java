@@ -5,6 +5,7 @@ class OwningField {
   @InheritableMustCall("a")
   static class Foo {
     void a() {}
+    void b() {}
   }
 
   @InheritableMustCall("dispose")
@@ -14,6 +15,7 @@ class OwningField {
     FinalOwningField() {
       // :: warning: (required.method.not.called)
       f = new Foo();
+      f.b();
     }
 
     void dispose() {

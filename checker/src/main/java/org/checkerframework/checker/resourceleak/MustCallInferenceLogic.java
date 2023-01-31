@@ -107,10 +107,10 @@ public class MustCallInferenceLogic {
 
       // This assumes that any MustCall annotation has at most one element.
       // TODO: generalize this to MustCall annotations with more than one element.
-      if (mustCallValues.size() == 1
-          && mustCallValues.contains(method.getSimpleName().toString())) {
+//      if (mustCallValues.size() == 1
+//          && mustCallValues.contains(method.getSimpleName().toString())) {
         owningFields.add((VariableElement) receiverEl);
-      }
+//      }
     }
   }
 

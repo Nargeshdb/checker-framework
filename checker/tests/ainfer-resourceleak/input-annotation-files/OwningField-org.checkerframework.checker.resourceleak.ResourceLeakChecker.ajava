@@ -1,0 +1,26 @@
+import org.checkerframework.checker.mustcall.qual.*;
+
+@org.checkerframework.framework.qual.AnnotatedFor("org.checkerframework.checker.resourceleak.ResourceLeakChecker")
+class OwningField {
+
+    static class Foo {
+
+        void a(@org.checkerframework.checker.calledmethods.qual.CalledMethods({}) Foo this) {
+        }
+    }
+
+    static class FinalOwningField {
+
+        final @org.checkerframework.checker.mustcall.qual.Owning @org.checkerframework.checker.calledmethods.qual.CalledMethods({}) Foo f;
+
+        FinalOwningField() {
+            // :: warning: (required.method.not.called)
+            f = new Foo();
+        }
+
+        @org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
+        void dispose() {
+            f.a();
+        }
+    }
+}
