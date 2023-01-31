@@ -226,13 +226,6 @@ public class MustCallInferenceLogic {
                 new Obligation(
                     ImmutableSet.of(new ResourceAlias(new LocalVariable(paramElement), param))));
           }
-        } else {
-          ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
-          if (rTypeFactory.hasMustCallAlias(paramElement)) {
-            addMustCallAlias(methodElt, i);
-          } else if (paramElement.getAnnotation(Owning.class) != null) {
-            addOwningOnParams(methodElt, i);
-          }
         }
       }
       return result;
