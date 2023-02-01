@@ -226,6 +226,13 @@ public class MustCallInferenceLogic {
                 new Obligation(
                     ImmutableSet.of(new ResourceAlias(new LocalVariable(paramElement), param))));
           }
+        } else {
+          ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
+          if (rTypeFactory.hasMustCallAlias(paramElement)) {
+            addMustCallAlias(methodElt, i);
+          } else if (paramElement.getAnnotation(Owning.class) != null) {
+            addOwningOnParams(methodElt, i);
+          }
         }
       }
       return result;
@@ -248,7 +255,7 @@ public class MustCallInferenceLogic {
 
     BlockWithObligations entry =
         new BlockWithObligations(
-            cfg.getEntryBlock(), getNonEmptyMCParams(cfg), Collections.emptyMap());
+            cfg.getEntryBlock(), getNonEmptyMCParams(cfg));
 
     worklist.add(entry);
     visited.add(entry);
@@ -257,23 +264,21 @@ public class MustCallInferenceLogic {
       BlockWithObligations current = worklist.remove();
 
       Set<Obligation> obligations = new LinkedHashSet<>(current.obligations);
-      Map<VariableElement, Boolean> nonFinalFieldsMap =
-          new LinkedHashMap<>(current.nonFinalFieldsMap);
 
       for (Node node : current.block.getNodes()) {
         if (node instanceof MethodInvocationNode || node instanceof ObjectCreationNode) {
           updateMethodInvocationOrObjectCreationNode(obligations, node);
           if (node instanceof MethodInvocationNode) {
-            checkMethodInvocation(obligations, nonFinalFieldsMap, (MethodInvocationNode) node);
+            checkMethodInvocation(obligations, (MethodInvocationNode) node);
           }
         } else if (node instanceof AssignmentNode) {
-          updateObligationsForAssignment(obligations, nonFinalFieldsMap, (AssignmentNode) node);
+          updateObligationsForAssignment(obligations, (AssignmentNode) node);
         } else if (node instanceof ReturnNode) {
           checkReturnNode(obligations, (ReturnNode) node);
         }
       }
 
-      propagateRegPaths(obligations, nonFinalFieldsMap, current.block, visited, worklist);
+      propagateRegPaths(obligations, current.block, visited, worklist);
     }
   }
 
@@ -353,7 +358,6 @@ public class MustCallInferenceLogic {
 
   private void updateObligationsForAssignment(
       Set<Obligation> obligations,
-      Map<VariableElement, Boolean> nonFinalFieldsMap,
       AssignmentNode assignmentNode) {
     Node lhs = assignmentNode.getTarget();
     Element lhsElement = TreeUtils.elementFromTree(lhs.getTree());
@@ -391,10 +395,14 @@ public class MustCallInferenceLogic {
             }
           }
         }
-      } else if (!ElementUtils.isFinal(lhsElement)) {
-        if (!nonFinalFieldsMap.containsKey(lhsElement) || !nonFinalFieldsMap.get(lhsElement)) {
-          nonFinalFieldsMap.put((VariableElement) lhsElement, true);
-        }
+      } else {
+        AnnotationBuilder builder =
+            new AnnotationBuilder(rTypeFactory.getProcessingEnv(), CreatesMustCallFor.class);
+        //            builder.setValue("value", ve.getSimpleName().toString());
+        AnnotationMirror am = builder.build();
+        ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
+        WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+        wpi.addMethodDeclarationAnnotation(methodElt, am);
       }
 
     } else if (lhs instanceof LocalVariableNode) {
@@ -458,7 +466,6 @@ public class MustCallInferenceLogic {
   }
 
   private void isOwningField(
-      Map<VariableElement, Boolean> nonFinalFieldsMap,
       ExecutableElement methodElt,
       VariableElement receiverEl,
       MethodInvocationNode mNode) {
@@ -474,11 +481,6 @@ public class MustCallInferenceLogic {
         if (ElementUtils.isFinal(receiverEl)) {
           addOrUpdateMustCall(enMethod);
           addEnsuresCalledMethods(receiverEl, methodElt, method);
-        } else {
-          if (nonFinalFieldsMap.containsKey(receiverEl) && nonFinalFieldsMap.get(receiverEl)) {
-            nonFinalFieldsMap.put(receiverEl, false);
-          }
-          // TODO handle non-final fields
         }
       }
     }
@@ -566,7 +568,6 @@ public class MustCallInferenceLogic {
 
   private void checkReceiverOfMethodCall(
       Set<Obligation> obligations,
-      Map<VariableElement, Boolean> nonFinalFieldsMap,
       ExecutableElement methodElt,
       MethodInvocationNode mNode,
       List<? extends VariableTree> paramsOfEnclosingMethod) {
@@ -578,7 +579,7 @@ public class MustCallInferenceLogic {
 
     Element receiverEl = TreeUtils.elementFromTree(receiver.getTree());
     if (receiverEl != null && rTypeFactory.isCandidateOwningField(receiverEl)) {
-      isOwningField(nonFinalFieldsMap, methodElt, (VariableElement) receiverEl, mNode);
+      isOwningField(methodElt, (VariableElement) receiverEl, mNode);
     }
 
     Node receiverTmpVar = getTempVarOrNode(receiver);
@@ -684,7 +685,6 @@ public class MustCallInferenceLogic {
    */
   private void checkMethodInvocation(
       Set<Obligation> obligations,
-      Map<VariableElement, Boolean> nonFinalFieldsMap,
       MethodInvocationNode mNode) {
     MethodTree enMethod = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
     ExecutableElement methodElt = TreeUtils.elementFromDeclaration(enMethod);
@@ -695,7 +695,7 @@ public class MustCallInferenceLogic {
 
     checkArgsOfMethodCall(obligations, methodElt, mNode, paramsOfEnclosingMethod);
     checkReceiverOfMethodCall(
-        obligations, nonFinalFieldsMap, methodElt, mNode, paramsOfEnclosingMethod);
+        obligations, methodElt, mNode, paramsOfEnclosingMethod);
     checkIndirectCalls(methodElt, mNode, paramsOfEnclosingMethod);
   }
 
@@ -710,7 +710,6 @@ public class MustCallInferenceLogic {
    */
   private void propagateRegPaths(
       Set<Obligation> obligations,
-      Map<VariableElement, Boolean> nonFinalFieldsMap,
       Block curBlock,
       Set<BlockWithObligations> visited,
       Deque<BlockWithObligations> worklist) {
@@ -725,23 +724,13 @@ public class MustCallInferenceLogic {
 
         assert wpi != null : "MustCallInference is running without WPI.";
         for (VariableElement fieldElt : owningFields) {
-          wpi.addFieldDeclarationAnnotation(fieldElt, OWNING);
-        }
-
-        for (VariableElement ve : nonFinalFieldsMap.keySet()) {
-          if (nonFinalFieldsMap.get(ve)) {
-            AnnotationBuilder builder =
-                new AnnotationBuilder(rTypeFactory.getProcessingEnv(), CreatesMustCallFor.class);
-            //            builder.setValue("value", ve.getSimpleName().toString());
-            AnnotationMirror am = builder.build();
-            MethodTree method = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
-            ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
-            wpi.addMethodDeclarationAnnotation(methodElt, am);
-          }
+//          if (!rTypeFactory.hasOwning(fieldElt)) {
+            wpi.addFieldDeclarationAnnotation(fieldElt, OWNING);
+//          }
         }
       }
       BlockWithObligations state =
-          new BlockWithObligations(successor, obligations, nonFinalFieldsMap);
+          new BlockWithObligations(successor, obligations);
       if (visited.add(state)) {
         worklist.add(state);
       }
@@ -785,8 +774,6 @@ public class MustCallInferenceLogic {
     /** The dataflow facts. */
     public final ImmutableSet<Obligation> obligations;
 
-    public final ImmutableMap<VariableElement, Boolean> nonFinalFieldsMap;
-
     /**
      * Create a new BlockWithObligations from a block and a set of dataflow facts.
      *
@@ -795,10 +782,9 @@ public class MustCallInferenceLogic {
      *     empty set)
      */
     public BlockWithObligations(
-        Block b, Set<Obligation> obligations, Map<VariableElement, Boolean> nonFinalFieldsMap) {
+        Block b, Set<Obligation> obligations) {
       this.block = b;
       this.obligations = ImmutableSet.copyOf(obligations);
-      this.nonFinalFieldsMap = ImmutableMap.copyOf(nonFinalFieldsMap);
     }
 
     @Override
