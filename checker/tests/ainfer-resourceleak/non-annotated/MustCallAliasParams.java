@@ -1,5 +1,6 @@
-import org.checkerframework.checker.mustcall.qual.*;
 import org.checkerframework.checker.calledmethods.qual.*;
+import org.checkerframework.checker.mustcall.qual.*;
+
 class MustCallAliasParams {
 
   @InheritableMustCall("a")
@@ -16,7 +17,9 @@ class MustCallAliasParams {
       f = foo;
     }
 
-    @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
+    @EnsuresCalledMethods(
+        value = {"this.f"},
+        methods = {"a"})
     public void a() {
       f.a();
     }
@@ -33,12 +36,15 @@ class MustCallAliasParams {
   private class MCASuperClass {
     int i;
     final @Owning Foo f;
+
     @MustCallAlias MCASuperClass(@MustCallAlias Foo foo, int i) {
       f = foo;
       i = i;
     }
 
-    @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
+    @EnsuresCalledMethods(
+        value = {"this.f"},
+        methods = {"a"})
     public void a() {
       f.a();
     }
@@ -61,6 +67,7 @@ class MustCallAliasParams {
     @MustCallAlias MCAThisCall(@MustCallAlias Foo foo) {
       super(foo, 1);
     }
+
     MCAThisCall(Foo foo, boolean b) {
       this(foo);
     }

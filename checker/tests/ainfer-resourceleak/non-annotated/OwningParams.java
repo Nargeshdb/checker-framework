@@ -1,5 +1,5 @@
-import org.checkerframework.checker.mustcall.qual.*;
 import org.checkerframework.checker.calledmethods.qual.*;
+import org.checkerframework.checker.mustcall.qual.*;
 
 class OwningParams {
   @InheritableMustCall("a")
@@ -20,7 +20,9 @@ class OwningParams {
   }
 
   private class OwningParamsIndirectCall {
-    @EnsuresCalledMethods(value = { "#1" }, methods = { "a" })
+    @EnsuresCalledMethods(
+        value = {"#1"},
+        methods = {"a"})
     void hasECM(@MustCall("a") Foo f) {
       f.a();
     }

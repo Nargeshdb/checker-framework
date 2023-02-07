@@ -1,5 +1,5 @@
-import org.checkerframework.checker.mustcall.qual.*;
 import org.checkerframework.checker.calledmethods.qual.*;
+import org.checkerframework.checker.mustcall.qual.*;
 
 class CreatesMustCallFor {
   @InheritableMustCall("a")
@@ -21,7 +21,9 @@ class CreatesMustCallFor {
       f = new Foo();
     }
 
-    @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
+    @EnsuresCalledMethods(
+        value = {"this.f"},
+        methods = {"a"})
     void a() {
       f.a();
     }

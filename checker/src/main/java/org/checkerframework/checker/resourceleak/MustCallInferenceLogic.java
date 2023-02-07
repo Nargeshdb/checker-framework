@@ -1,6 +1,5 @@
 package org.checkerframework.checker.resourceleak;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.sun.source.tree.ClassTree;
@@ -13,10 +12,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
@@ -27,7 +24,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods;
 import org.checkerframework.checker.mustcall.qual.CreatesMustCallFor;
-import org.checkerframework.checker.mustcall.qual.MustCall;
 import org.checkerframework.checker.mustcall.qual.InheritableMustCall;
 import org.checkerframework.checker.mustcall.qual.MustCallAlias;
 import org.checkerframework.checker.mustcall.qual.Owning;
@@ -208,7 +204,8 @@ public class MustCallInferenceLogic {
     OWNING = AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), Owning.class);
     MUSTCALLALIAS =
         AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), MustCallAlias.class);
-    MUSTCALL = AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), InheritableMustCall.class);
+    MUSTCALL =
+        AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), InheritableMustCall.class);
   }
 
   private Set<Obligation> getNonEmptyMCParams(ControlFlowGraph cfg) {
@@ -254,8 +251,7 @@ public class MustCallInferenceLogic {
     Deque<BlockWithObligations> worklist = new ArrayDeque<>();
 
     BlockWithObligations entry =
-        new BlockWithObligations(
-            cfg.getEntryBlock(), getNonEmptyMCParams(cfg));
+        new BlockWithObligations(cfg.getEntryBlock(), getNonEmptyMCParams(cfg));
 
     worklist.add(entry);
     visited.add(entry);
@@ -357,8 +353,7 @@ public class MustCallInferenceLogic {
   }
 
   private void updateObligationsForAssignment(
-      Set<Obligation> obligations,
-      AssignmentNode assignmentNode) {
+      Set<Obligation> obligations, AssignmentNode assignmentNode) {
     Node lhs = assignmentNode.getTarget();
     Element lhsElement = TreeUtils.elementFromTree(lhs.getTree());
     // Use the temporary variable for the rhs if it exists.
@@ -466,9 +461,7 @@ public class MustCallInferenceLogic {
   }
 
   private void isOwningField(
-      ExecutableElement methodElt,
-      VariableElement receiverEl,
-      MethodInvocationNode mNode) {
+      ExecutableElement methodElt, VariableElement receiverEl, MethodInvocationNode mNode) {
     if (receiverEl != null && rTypeFactory.isCandidateOwningField(receiverEl)) {
       Element method = TreeUtils.elementFromUse(mNode.getTree());
       List<String> mustCallValues = rTypeFactory.getMustCallValue(receiverEl);
@@ -509,12 +502,12 @@ public class MustCallInferenceLogic {
       WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
       wpi.addClassDeclarationAnnotation(typeElement, builder.build());
     }
-//    else {
-//      builder = new AnnotationBuilder(rTypeFactory.getProcessingEnv(), MustCall.class);
-//      builder.setValue("value", rTypeFactory.getMustCallValue(typeElement));
-//      WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-//      wpi.addClassDeclarationAnnotation(typeElement, builder.build());
-//    }
+    //    else {
+    //      builder = new AnnotationBuilder(rTypeFactory.getProcessingEnv(), MustCall.class);
+    //      builder.setValue("value", rTypeFactory.getMustCallValue(typeElement));
+    //      WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+    //      wpi.addClassDeclarationAnnotation(typeElement, builder.build());
+    //    }
   }
 
   private void checkArgsOfMethodCall(
@@ -683,9 +676,7 @@ public class MustCallInferenceLogic {
    *
    * @param mNode the MethodInvocationNode
    */
-  private void checkMethodInvocation(
-      Set<Obligation> obligations,
-      MethodInvocationNode mNode) {
+  private void checkMethodInvocation(Set<Obligation> obligations, MethodInvocationNode mNode) {
     MethodTree enMethod = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
     ExecutableElement methodElt = TreeUtils.elementFromDeclaration(enMethod);
     if (methodElt == null) {
@@ -694,8 +685,7 @@ public class MustCallInferenceLogic {
     List<? extends VariableTree> paramsOfEnclosingMethod = enMethod.getParameters();
 
     checkArgsOfMethodCall(obligations, methodElt, mNode, paramsOfEnclosingMethod);
-    checkReceiverOfMethodCall(
-        obligations, methodElt, mNode, paramsOfEnclosingMethod);
+    checkReceiverOfMethodCall(obligations, methodElt, mNode, paramsOfEnclosingMethod);
     checkIndirectCalls(methodElt, mNode, paramsOfEnclosingMethod);
   }
 
@@ -724,13 +714,12 @@ public class MustCallInferenceLogic {
 
         assert wpi != null : "MustCallInference is running without WPI.";
         for (VariableElement fieldElt : owningFields) {
-//          if (!rTypeFactory.hasOwning(fieldElt)) {
-            wpi.addFieldDeclarationAnnotation(fieldElt, OWNING);
-//          }
+          //          if (!rTypeFactory.hasOwning(fieldElt)) {
+          wpi.addFieldDeclarationAnnotation(fieldElt, OWNING);
+          //          }
         }
       }
-      BlockWithObligations state =
-          new BlockWithObligations(successor, obligations);
+      BlockWithObligations state = new BlockWithObligations(successor, obligations);
       if (visited.add(state)) {
         worklist.add(state);
       }
@@ -781,8 +770,7 @@ public class MustCallInferenceLogic {
      * @param obligations the set of incoming Obligations at the start of the block (may be the
      *     empty set)
      */
-    public BlockWithObligations(
-        Block b, Set<Obligation> obligations) {
+    public BlockWithObligations(Block b, Set<Obligation> obligations) {
       this.block = b;
       this.obligations = ImmutableSet.copyOf(obligations);
     }

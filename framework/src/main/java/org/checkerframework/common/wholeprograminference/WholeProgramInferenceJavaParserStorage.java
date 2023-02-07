@@ -77,6 +77,7 @@ import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedArrayTyp
 import org.checkerframework.framework.type.GenericAnnotatedTypeFactory;
 import org.checkerframework.framework.util.AnnotationMirrorSet;
 import org.checkerframework.framework.util.JavaParserUtil;
+import org.checkerframework.javacutil.AnnotationMirrorSet;
 import org.checkerframework.javacutil.BugInCF;
 import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.Pair;
@@ -366,6 +367,10 @@ public class WholeProgramInferenceJavaParserStorage
   @Override
   public boolean addFieldDeclarationAnnotation(VariableElement field, AnnotationMirror anno) {
     FieldAnnos fieldAnnos = getFieldAnnos(field);
+    if (fieldAnnos == null) {
+      // See the comment on the similar exception in #getParameterAnnotations, above.
+      return false;
+    }
     boolean isNewAnnotation = fieldAnnos != null && fieldAnnos.addDeclarationAnnotation(anno);
     if (isNewAnnotation) {
       modifiedFiles.add(getFileForElement(field));
@@ -378,7 +383,8 @@ public class WholeProgramInferenceJavaParserStorage
       ExecutableElement methodElt, int index, AnnotationMirror anno) {
     CallableDeclarationAnnos methodAnnos = getMethodAnnos(methodElt);
     if (methodAnnos == null) {
-      return false; //TODO investigate it
+      // See the comment on the similar exception in #getParameterAnnotations, above.
+      return false;
     }
     boolean isNewAnnotation = methodAnnos.addDeclarationAnnotationToFormalParameter(anno, index);
     if (isNewAnnotation) {
@@ -391,6 +397,10 @@ public class WholeProgramInferenceJavaParserStorage
   public boolean addClassDeclarationAnnotation(TypeElement classElt, AnnotationMirror anno) {
     String className = ElementUtils.getBinaryName(classElt);
     ClassOrInterfaceAnnos classAnnos = classToAnnos.get(className);
+    if (classAnnos == null) {
+      // See the comment on the similar exception in #getParameterAnnotations, above.
+      return false;
+    }
     boolean isNewAnnotation = classAnnos.addAnnotationToClassDeclaration(anno);
     if (isNewAnnotation) {
       modifiedFiles.add(getFileForElement(classElt));
@@ -401,7 +411,18 @@ public class WholeProgramInferenceJavaParserStorage
   @Override
   public AnnotatedTypeMirror atmFromStorageLocation(
       TypeMirror typeMirror, AnnotatedTypeMirror storageLocation) {
-    return storageLocation;
+    if (typeMirror.getKind() == TypeKind.TYPEVAR) {
+      // Only copy the primary annotation, because we don't currently have
+      // support for inferring type bounds. This avoids accidentally substituting the
+      // use of the type variable for its declaration when inferring annotations on
+      // fields with a type variable as their type.
+      AnnotatedTypeMirror asExpectedType =
+          AnnotatedTypeMirror.createType(typeMirror, atypeFactory, false);
+      asExpectedType.replaceAnnotations(storageLocation.getAnnotations());
+      return asExpectedType;
+    } else {
+      return storageLocation;
+    }
   }
 
   @Override
@@ -1041,7 +1062,7 @@ public class WholeProgramInferenceJavaParserStorage
      * Annotations on the declaration of the class (note that despite the name, these can also be
      * type annotations).
      */
-    private @MonotonicNonNull Set<AnnotationMirror> classAnnotations = null;
+    private @MonotonicNonNull AnnotationMirrorSet classAnnotations = null;
 
     /**
      * The Java Parser TypeDeclaration representing the class's declaration. Used for placing
@@ -1128,7 +1149,7 @@ public class WholeProgramInferenceJavaParserStorage
      */
     private @MonotonicNonNull List<@Nullable AnnotatedTypeMirror> parameterTypes = null;
     /** Annotations on the callable declaration. */
-    private @MonotonicNonNull Set<AnnotationMirror> declarationAnnotations = null;
+    private @MonotonicNonNull AnnotationMirrorSet declarationAnnotations = null;
 
     /** Declaration annotations on the parameters. */
     private @MonotonicNonNull Set<Pair<Integer, AnnotationMirror>> paramsDeclAnnos = null;
@@ -1208,12 +1229,12 @@ public class WholeProgramInferenceJavaParserStorage
      *
      * @return the declaration annotations for this callable declaration
      */
-    public Set<AnnotationMirror> getDeclarationAnnotations() {
+    public AnnotationMirrorSet getDeclarationAnnotations() {
       if (declarationAnnotations == null) {
-        return Collections.emptySet();
+        return AnnotationMirrorSet.emptySet();
       }
 
-      return Collections.unmodifiableSet(declarationAnnotations);
+      return AnnotationMirrorSet.unmodifiableSet(declarationAnnotations);
     }
 
     /**
@@ -1471,7 +1492,7 @@ public class WholeProgramInferenceJavaParserStorage
     /** Inferred type for field, initialized the first time it's accessed. */
     private @MonotonicNonNull AnnotatedTypeMirror type = null;
     /** Annotations on the field declaration. */
-    private @MonotonicNonNull Set<AnnotationMirror> declarationAnnotations = null;
+    private @MonotonicNonNull AnnotationMirrorSet declarationAnnotations = null;
 
     /**
      * Creates a wrapper for the given field declaration.
@@ -1522,12 +1543,12 @@ public class WholeProgramInferenceJavaParserStorage
      * @return the declaration annotations for this field declaration
      */
     @SuppressWarnings("UnusedMethod")
-    public Set<AnnotationMirror> getDeclarationAnnotations() {
+    public AnnotationMirrorSet getDeclarationAnnotations() {
       if (declarationAnnotations == null) {
-        return Collections.emptySet();
+        return AnnotationMirrorSet.emptySet();
       }
 
-      return Collections.unmodifiableSet(declarationAnnotations);
+      return AnnotationMirrorSet.unmodifiableSet(declarationAnnotations);
     }
 
     /**

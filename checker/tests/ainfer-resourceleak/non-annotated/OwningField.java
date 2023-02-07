@@ -1,5 +1,5 @@
-import org.checkerframework.checker.mustcall.qual.*;
 import org.checkerframework.checker.calledmethods.qual.*;
+import org.checkerframework.checker.mustcall.qual.*;
 
 class OwningField {
 
@@ -16,7 +16,9 @@ class OwningField {
       f = new Foo();
     }
 
-    @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
+    @EnsuresCalledMethods(
+        value = {"this.f"},
+        methods = {"a"})
     void dispose() {
       f.a();
     }
@@ -33,10 +35,11 @@ class OwningField {
       f = new Foo();
     }
 
-    @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
+    @EnsuresCalledMethods(
+        value = {"this.f"},
+        methods = {"a"})
     void dispose() {
       f.a();
     }
   }
-
 }

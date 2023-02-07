@@ -1,5 +1,5 @@
-import org.checkerframework.checker.mustcall.qual.*;
 import org.checkerframework.checker.calledmethods.qual.*;
+import org.checkerframework.checker.mustcall.qual.*;
 
 class OwningParams {
   @InheritableMustCall("a")
@@ -16,7 +16,9 @@ class OwningParams {
       f = foo;
     }
 
-    @EnsuresCalledMethods(value = { "this.f" }, methods = { "a" })
+    @EnsuresCalledMethods(
+        value = {"this.f"},
+        methods = {"a"})
     public void dispose() {
       f.a();
     }
