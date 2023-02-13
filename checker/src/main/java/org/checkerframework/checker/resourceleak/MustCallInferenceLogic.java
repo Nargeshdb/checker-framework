@@ -198,8 +198,10 @@ public class MustCallInferenceLogic {
    * @param typeFactory the type factory
    * @param cfg the ControlFlowGraph
    */
-  MustCallInferenceLogic(ResourceLeakAnnotatedTypeFactory typeFactory, ControlFlowGraph cfg) {
+  /*package-private*/ MustCallInferenceLogic(
+      ResourceLeakAnnotatedTypeFactory typeFactory, ControlFlowGraph cfg) {
     this.rTypeFactory = typeFactory;
+
     this.cfg = cfg;
     OWNING = AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), Owning.class);
     MUSTCALLALIAS =

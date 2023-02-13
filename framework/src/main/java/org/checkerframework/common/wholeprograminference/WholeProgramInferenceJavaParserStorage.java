@@ -9,6 +9,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
+import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.ReceiverParameter;
@@ -75,7 +76,6 @@ import org.checkerframework.framework.type.AnnotatedTypeFactory;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedArrayType;
 import org.checkerframework.framework.type.GenericAnnotatedTypeFactory;
-import org.checkerframework.framework.util.AnnotationMirrorSet;
 import org.checkerframework.framework.util.JavaParserUtil;
 import org.checkerframework.javacutil.AnnotationMirrorSet;
 import org.checkerframework.javacutil.BugInCF;
@@ -1561,11 +1561,17 @@ public class WholeProgramInferenceJavaParserStorage
       }
 
       if (declarationAnnotations != null) {
-        ClassOrInterfaceType type = declaration.getType().asClassOrInterfaceType();
-        for (AnnotationMirror annotation : declarationAnnotations) {
-          type.addAnnotation(
-              AnnotationMirrorToAnnotationExprConversion.annotationMirrorToAnnotationExpr(
-                  annotation));
+        // Don't add directly to the type of the variable declarator,
+        // because declaration annotations need to be attached to the FieldDeclaration
+        // node instead.
+        Node declParent = declaration.getParentNode().orElse(null);
+        if (declParent instanceof FieldDeclaration) {
+          FieldDeclaration decl = (FieldDeclaration) declParent;
+          for (AnnotationMirror annotation : declarationAnnotations) {
+            decl.addAnnotation(
+                AnnotationMirrorToAnnotationExprConversion.annotationMirrorToAnnotationExpr(
+                    annotation));
+          }
         }
       }
 

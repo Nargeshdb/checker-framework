@@ -48,15 +48,15 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
     implements CreatesMustCallForElementSupplier {
 
   /** The MustCall.value element/field. */
-  final ExecutableElement mustCallValueElement =
+  private final ExecutableElement mustCallValueElement =
       TreeUtils.getMethod(MustCall.class, "value", 0, processingEnv);
 
   /** The EnsuresCalledMethods.value element/field. */
-  final ExecutableElement ensuresCalledMethodsValueElement =
+  /* package-private */ final ExecutableElement ensuresCalledMethodsValueElement =
       TreeUtils.getMethod(EnsuresCalledMethods.class, "value", 0, processingEnv);
 
   /** The EnsuresCalledMethods.methods element/field. */
-  final ExecutableElement ensuresCalledMethodsMethodsElement =
+  /* package-private */ final ExecutableElement ensuresCalledMethodsMethodsElement =
       TreeUtils.getMethod(EnsuresCalledMethods.class, "methods", 0, processingEnv);
 
   /** The CreatesMustCallFor.List.value element/field. */
@@ -66,6 +66,9 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
   /** The CreatesMustCallFor.value element/field. */
   private final ExecutableElement createsMustCallForValueElement =
       TreeUtils.getMethod(CreatesMustCallFor.class, "value", 0, processingEnv);
+
+  /** True if -AnoResourceAliases was passed on the command line. */
+  private final boolean noResourceAliases;
 
   /**
    * Bidirectional map to store temporary variables created for expressions with non-empty @MustCall
@@ -90,6 +93,7 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
    */
   public ResourceLeakAnnotatedTypeFactory(final BaseTypeChecker checker) {
     super(checker);
+    this.noResourceAliases = checker.hasOption(MustCallChecker.NO_RESOURCE_ALIASES);
     this.postInit();
   }
 
@@ -288,7 +292,7 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
    * @return true if the given element has an {@link MustCallAlias} annotation
    */
   /* package-private */ boolean hasMustCallAlias(Element elt) {
-    if (checker.hasOption(MustCallChecker.NO_RESOURCE_ALIASES)) {
+    if (noResourceAliases) {
       return false;
     }
     MustCallAnnotatedTypeFactory mustCallAnnotatedTypeFactory =
@@ -318,6 +322,7 @@ public class ResourceLeakAnnotatedTypeFactory extends CalledMethodsAnnotatedType
    *     checker
    */
   public boolean canCreateObligations() {
+    // Precomputing this call to `hasOption` causes a NullPointerException, so leave it as is.
     return !checker.hasOption(MustCallChecker.NO_CREATES_MUSTCALLFOR);
   }
 
