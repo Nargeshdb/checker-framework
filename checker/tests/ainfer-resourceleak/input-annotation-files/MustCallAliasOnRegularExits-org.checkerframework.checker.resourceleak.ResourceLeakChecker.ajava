@@ -1,0 +1,37 @@
+import org.checkerframework.checker.calledmethods.qual.*;
+import org.checkerframework.checker.mustcall.qual.*;
+import java.io.IOException;
+
+@org.checkerframework.framework.qual.AnnotatedFor("org.checkerframework.checker.resourceleak.ResourceLeakChecker")
+class MustCallAliasOnRegularExits {
+
+    static class Foo {
+
+        void a() {}
+
+        int b(Foo this) throws IOException {
+            return 0;
+        }
+    }
+
+    private abstract class MCAConstructor extends Foo {
+
+        // expect owning annotation for this field
+        @org.checkerframework.checker.mustcall.qual.Owning
+        protected final Foo f;
+
+        protected int s = 0;
+
+        @org.checkerframework.checker.mustcall.qual.MustCallAlias
+        protected MCAConstructor(@org.checkerframework.checker.mustcall.qual.MustCallAlias Foo foo) throws IOException {
+            if (foo == null) {
+                this.s = foo.b();
+            }
+            this.f = foo;
+        }
+
+        public void a(MCAConstructor this) {
+            f.a();
+        }
+    }
+}

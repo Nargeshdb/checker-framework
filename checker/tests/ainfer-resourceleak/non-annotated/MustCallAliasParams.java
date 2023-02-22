@@ -98,10 +98,21 @@ class MustCallAliasParams {
       return f;
     }
 
+    MCASuperClass returnAliasFoo2(Foo foo, int i) {
+      MCASuperClass f = new MCASuperClass(foo, i);
+      return f;
+    }
+
+    void testReturnAliasFoo2() {
+      // :: warning: (required.method.not.called)
+      Foo foo = new Foo();
+      MCASuperClass f = returnAliasFoo2(foo, 0);
+      f.a();
+    }
+
     void returnAliasFooTest() {
       // :: warning: (required.method.not.called)
       Foo f = new Foo();
-      MCAMethod mcam = new MCAMethod();
       Foo foo = returnAliasFoo(f);
       foo.a();
     }

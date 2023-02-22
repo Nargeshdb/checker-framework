@@ -395,7 +395,7 @@ public class MustCallInferenceLogic {
       } else {
         AnnotationBuilder builder =
             new AnnotationBuilder(rTypeFactory.getProcessingEnv(), CreatesMustCallFor.class);
-        //            builder.setValue("value", ve.getSimpleName().toString());
+        builder.setValue("value", "this");
         AnnotationMirror am = builder.build();
         ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
         WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
@@ -684,6 +684,16 @@ public class MustCallInferenceLogic {
     if (methodElt == null) {
       return;
     }
+
+    if (rTypeFactory.hasCreatesMustCallFor(mNode)) {
+      AnnotationBuilder builder =
+          new AnnotationBuilder(rTypeFactory.getProcessingEnv(), CreatesMustCallFor.class);
+      builder.setValue("value", "this");
+      AnnotationMirror am = builder.build();
+      WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+      wpi.addMethodDeclarationAnnotation(methodElt, am);
+    }
+
     List<? extends VariableTree> paramsOfEnclosingMethod = enMethod.getParameters();
 
     checkArgsOfMethodCall(obligations, methodElt, mNode, paramsOfEnclosingMethod);
