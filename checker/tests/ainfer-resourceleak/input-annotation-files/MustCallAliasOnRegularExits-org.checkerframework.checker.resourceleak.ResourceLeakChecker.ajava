@@ -22,8 +22,7 @@ class MustCallAliasOnRegularExits {
 
         protected int s = 0;
 
-        @org.checkerframework.checker.mustcall.qual.MustCallAlias
-        protected MCAConstructor(@org.checkerframework.checker.mustcall.qual.MustCallAlias Foo foo) throws IOException {
+        protected MCAConstructor(Foo foo) throws IOException {
             if (foo == null) {
                 this.s = foo.b();
             }

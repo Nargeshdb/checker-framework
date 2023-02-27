@@ -6,16 +6,7 @@ import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -473,11 +464,13 @@ public class MustCallInferenceLogic {
         // TODO: generalize this to MustCall annotations with more than one element.
         owningFields.add(receiverEl);
         MethodTree enMethod = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
-        if (ElementUtils.isFinal(receiverEl)) {
+//        if (ElementUtils.isFinal(receiverEl)) {
           addOrUpdateMustCall(enMethod);
           addEnsuresCalledMethods(receiverEl, methodElt, method);
-        }
+//        }
       }
+    } else {
+
     }
   }
 
@@ -524,6 +517,37 @@ public class MustCallInferenceLogic {
     }
 
     for (int i = 0; i < arguments.size(); i++) {
+      Element arg = TreeUtils.elementFromTree(arguments.get(i).getTree());
+      if (arg != null && rTypeFactory.isCandidateOwningField(arg)) {
+        CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
+        JavaExpression target = JavaExpression.fromNode(arguments.get(i));
+        CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
+
+        AnnotationMirror cmAnno = null;
+        if (cmValue != null) {
+          for (AnnotationMirror anno : cmValue.getAnnotations()) {
+            if (AnnotationUtils.areSameByName(
+                anno, "org.checkerframework.checker.calledmethods.qual.CalledMethods")) {
+              cmAnno = anno;
+              break;
+            }
+          }
+        }
+
+        if (cmAnno == null) {
+          cmAnno = rTypeFactory.top;
+        }
+
+        List<String> mustCallValues = rTypeFactory.getMustCallValue(arg);
+
+        AnnotationMirror cmAnnoForMustCallMethods =
+            rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
+        if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+          owningFields.add((VariableElement) arg);
+          // TODO infer @MustCall and @EnsuresCalledMethods
+        }
+      }
+
       if (!rTypeFactory.hasMustCallAlias(parameters.get(i))
           && !rTypeFactory.hasOwning(parameters.get(i))) {
         continue;
@@ -617,10 +641,11 @@ public class MustCallInferenceLogic {
               break;
             }
           }
-          if (cmAnno == null) {
-            cmAnno = rTypeFactory.top;
-          }
         }
+        if (cmAnno == null) {
+          cmAnno = rTypeFactory.top;
+        }
+
 
         AnnotationMirror cmAnnoForMustCallMethods =
             rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
@@ -657,9 +682,10 @@ public class MustCallInferenceLogic {
             break;
           }
         }
-        if (cmAnno == null) {
-          cmAnno = rTypeFactory.top;
-        }
+      }
+
+      if (cmAnno == null) {
+        cmAnno = rTypeFactory.top;
       }
 
       AnnotationMirror cmAnnoForMustCallMethods =
@@ -726,7 +752,7 @@ public class MustCallInferenceLogic {
 
         assert wpi != null : "MustCallInference is running without WPI.";
         for (VariableElement fieldElt : owningFields) {
-          //          if (!rTypeFactory.hasOwning(fieldElt)) {
+          System.out.println(fieldElt.toString());
           wpi.addFieldDeclarationAnnotation(fieldElt, OWNING);
           //          }
         }

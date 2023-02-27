@@ -18,7 +18,6 @@ class MustCallAliasOnRegularExits {
     protected final Foo f; // expect owning annotation for this field
     protected long s = 0L;
 
-    // :: warning: (annotations.on.use)
     protected MCAConstructor(Foo foo) throws IOException {
       if (foo == null) {
         this.s = foo.b();
