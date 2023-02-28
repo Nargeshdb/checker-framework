@@ -25,7 +25,6 @@ class OwningFieldIndirectCall {
       f = new Foo();
     }
 
-
     void dispose() {
       Utility.closeStream(f);
     }

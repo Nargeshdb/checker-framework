@@ -1,6 +1,6 @@
+import java.io.IOException;
 import org.checkerframework.checker.calledmethods.qual.*;
 import org.checkerframework.checker.mustcall.qual.*;
-import java.io.IOException;
 
 class MustCallAliasOnRegularExits {
 
