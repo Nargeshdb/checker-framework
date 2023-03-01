@@ -486,7 +486,7 @@ public class MustCallInferenceLogic {
     String[] methods = new String[] {null};
     int index = 0;
     for (VariableElement ve : owningFieldToECM) {
-      values[index++] = ve.getSimpleName().toString();
+      values[index++] = "this." + ve.getSimpleName().toString();
       // we assume that if we have multiple fields they all have the same must call obligation
       methods[0] = rTypeFactory.getMustCallValue(ve).get(0);
     }
