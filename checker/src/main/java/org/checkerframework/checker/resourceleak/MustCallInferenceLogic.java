@@ -532,10 +532,11 @@ public class MustCallInferenceLogic {
     }
 
     for (int i = 0; i < arguments.size(); i++) {
-      Element arg = TreeUtils.elementFromTree(arguments.get(i).getTree());
-      if (arg != null && rTypeFactory.isCandidateOwningField(arg)) {
+      Node arg = NodeUtils.removeCasts(arguments.get(i));
+      Element argElt = TreeUtils.elementFromTree(arg.getTree());
+      if (argElt != null && rTypeFactory.isCandidateOwningField(argElt)) {
         CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
-        JavaExpression target = JavaExpression.fromNode(arguments.get(i));
+        JavaExpression target = JavaExpression.fromNode(arg);
         CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
 
         AnnotationMirror cmAnno = null;
@@ -553,13 +554,13 @@ public class MustCallInferenceLogic {
           cmAnno = rTypeFactory.top;
         }
 
-        List<String> mustCallValues = rTypeFactory.getMustCallValue(arg);
+        List<String> mustCallValues = rTypeFactory.getMustCallValue(argElt);
 
         AnnotationMirror cmAnnoForMustCallMethods =
             rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
         if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
-          owningFields.add((VariableElement) arg);
-          owningFieldToECM.add((VariableElement) arg);
+          owningFields.add((VariableElement) argElt);
+          owningFieldToECM.add((VariableElement) argElt);
           // TODO infer @MustCall and @EnsuresCalledMethods
         }
       }
@@ -569,7 +570,7 @@ public class MustCallInferenceLogic {
         continue;
       }
 
-      Node tempVar = getTempVarOrNode(arguments.get(i));
+      Node tempVar = getTempVarOrNode(arg);
       if (!(tempVar instanceof LocalVariableNode)) {
         continue;
       }
@@ -581,11 +582,11 @@ public class MustCallInferenceLogic {
 
       Set<ResourceAlias> argAliases = argumentObligation.resourceAliases;
       for (ResourceAlias rl : argAliases) {
-        Element argElt = rl.reference.getElement();
+        Element argAliasElt = rl.reference.getElement();
         for (int j = 0; j < paramsOfEnclosingMethod.size(); j++) {
           VariableElement paramElt =
               TreeUtils.elementFromDeclaration(paramsOfEnclosingMethod.get(j));
-          if (!argElt.equals(paramElt)) {
+          if (!argAliasElt.equals(paramElt)) {
             continue;
           }
           if (TreeUtils.isSuperConstructorCall(mNode.getTree())
