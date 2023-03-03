@@ -774,13 +774,13 @@ task ainferResourceLeakGenerateAjava(type: Test) {
   }
 
 
-//        debugOptions {
-//            enabled = true
-//            host = 'localhost'
-//            port = 4455
-//            server = true
-//            suspend = true
-//        }
+  //        debugOptions {
+  //            enabled = true
+  //            host = 'localhost'
+  //            port = 4455
+  //            server = true
+  //            suspend = true
+  //        }
 
   doLast {
     copyNonannotatedToAnnotatedDirectory('ainfer-resourceleak')

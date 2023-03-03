@@ -533,7 +533,7 @@ public class MustCallInferenceLogic {
         List<Node> arrays = arrayCreationNode.getInitializers();
         for (Node n : arrays) {
           Element nElt = TreeUtils.elementFromTree(n.getTree());
-          if (!rTypeFactory.isCandidateOwningField(nElt)) {
+          if (nElt == null || !rTypeFactory.isCandidateOwningField(nElt)) {
             continue;
           }
           CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
@@ -565,7 +565,6 @@ public class MustCallInferenceLogic {
             // TODO infer @MustCall and @EnsuresCalledMethods
           }
         }
-
       }
 
       if (argElt != null && rTypeFactory.isCandidateOwningField(argElt)) {

@@ -32,15 +32,14 @@ class EnsuresCalledMethodsVarArgsTest {
       Utils.close(fff);
     }
 
-
-    @EnsuresCalledMethods(value = { "#1" }, methods = { "a" })
+    @EnsuresCalledMethods(
+        value = {"#1"},
+        methods = {"a"})
     void closef(Foo f) {
       if (f != null) {
         Utils.close(f);
       }
     }
-
-
   }
 
   private class ECMVACorrect {
@@ -55,20 +54,22 @@ class EnsuresCalledMethodsVarArgsTest {
       close(ff);
     }
 
-
-    @EnsuresCalledMethods(value = { "#1" }, methods = { "a" })
+    @EnsuresCalledMethods(
+        value = {"#1"},
+        methods = {"a"})
     void closef(Foo f) {
       if (f != null) {
         close(f);
       }
     }
 
-    @EnsuresCalledMethods(value = { "#1" }, methods = { "a" })
+    @EnsuresCalledMethods(
+        value = {"#1"},
+        methods = {"a"})
     void close(Foo f) {
       if (f != null) {
         f.a();
       }
     }
   }
-
 }
