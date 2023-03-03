@@ -25,13 +25,7 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.dataflow.cfg.block.Block;
 import org.checkerframework.dataflow.cfg.block.ConditionalBlock;
 import org.checkerframework.dataflow.cfg.block.SingleSuccessorBlock;
-import org.checkerframework.dataflow.cfg.node.AssignmentNode;
-import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
-import org.checkerframework.dataflow.cfg.node.MethodInvocationNode;
-import org.checkerframework.dataflow.cfg.node.Node;
-import org.checkerframework.dataflow.cfg.node.NullLiteralNode;
-import org.checkerframework.dataflow.cfg.node.ObjectCreationNode;
-import org.checkerframework.dataflow.cfg.node.ReturnNode;
+import org.checkerframework.dataflow.cfg.node.*;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.dataflow.expression.LocalVariable;
 import org.checkerframework.dataflow.util.NodeUtils;
@@ -534,6 +528,46 @@ public class MustCallInferenceLogic {
     for (int i = 0; i < arguments.size(); i++) {
       Node arg = NodeUtils.removeCasts(arguments.get(i));
       Element argElt = TreeUtils.elementFromTree(arg.getTree());
+      if (argElt == null && arg instanceof ArrayCreationNode) {
+        ArrayCreationNode arrayCreationNode = (ArrayCreationNode) arg;
+        List<Node> arrays = arrayCreationNode.getInitializers();
+        for (Node n : arrays) {
+          Element nElt = TreeUtils.elementFromTree(n.getTree());
+          if (!rTypeFactory.isCandidateOwningField(nElt)) {
+            continue;
+          }
+          CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
+          JavaExpression target = JavaExpression.fromNode(n);
+          CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
+
+          AnnotationMirror cmAnno = null;
+          if (cmValue != null) {
+            for (AnnotationMirror anno : cmValue.getAnnotations()) {
+              if (AnnotationUtils.areSameByName(
+                  anno, "org.checkerframework.checker.calledmethods.qual.CalledMethods")) {
+                cmAnno = anno;
+                break;
+              }
+            }
+          }
+
+          if (cmAnno == null) {
+            cmAnno = rTypeFactory.top;
+          }
+
+          List<String> mustCallValues = rTypeFactory.getMustCallValue(nElt);
+
+          AnnotationMirror cmAnnoForMustCallMethods =
+              rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
+          if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+            owningFields.add((VariableElement) nElt);
+            owningFieldToECM.add((VariableElement) nElt);
+            // TODO infer @MustCall and @EnsuresCalledMethods
+          }
+        }
+
+      }
+
       if (argElt != null && rTypeFactory.isCandidateOwningField(argElt)) {
         CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
         JavaExpression target = JavaExpression.fromNode(arg);
