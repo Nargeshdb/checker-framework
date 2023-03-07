@@ -14,10 +14,9 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods;
-import org.checkerframework.checker.mustcall.qual.CreatesMustCallFor;
-import org.checkerframework.checker.mustcall.qual.InheritableMustCall;
-import org.checkerframework.checker.mustcall.qual.MustCallAlias;
-import org.checkerframework.checker.mustcall.qual.Owning;
+import org.checkerframework.checker.mustcall.MustCallAnnotatedTypeFactory;
+import org.checkerframework.checker.mustcall.MustCallChecker;
+import org.checkerframework.checker.mustcall.qual.*;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.wholeprograminference.WholeProgramInference;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
@@ -31,12 +30,8 @@ import org.checkerframework.dataflow.expression.LocalVariable;
 import org.checkerframework.dataflow.util.NodeUtils;
 import org.checkerframework.framework.flow.CFStore;
 import org.checkerframework.framework.flow.CFValue;
-import org.checkerframework.javacutil.AnnotationBuilder;
-import org.checkerframework.javacutil.AnnotationUtils;
-import org.checkerframework.javacutil.BugInCF;
-import org.checkerframework.javacutil.TreePathUtil;
-import org.checkerframework.javacutil.TreeUtils;
-import org.checkerframework.javacutil.TypeSystemError;
+import org.checkerframework.framework.type.AnnotatedTypeMirror;
+import org.checkerframework.javacutil.*;
 
 /**
  * This class contains Resource Leak Checker annotation inference algorithm. For now, it just
@@ -209,7 +204,7 @@ public class MustCallInferenceLogic {
       VariableElement paramElement = TreeUtils.elementFromDeclaration(param);
       if (!rTypeFactory.hasMustCallAlias(paramElement)
           && paramElement.getAnnotation(Owning.class) == null) {
-        if (rTypeFactory.declaredTypeHasMustCall(param)) {
+        if (hasDeclaredMustCall(param)) {
           result.add(
               new Obligation(
                   ImmutableSet.of(new ResourceAlias(new LocalVariable(paramElement), param))));
@@ -226,6 +221,20 @@ public class MustCallInferenceLogic {
     return result;
   }
 
+  private boolean hasDeclaredMustCall(VariableTree param) {
+    MustCallAnnotatedTypeFactory mustCallAnnotatedTypeFactory = rTypeFactory.getTypeFactoryOfSubchecker(MustCallChecker.class);
+    TypeElement typeElement = TypesUtils.getTypeElement(JavaExpression.fromVariableTree(param).getType());
+    if (typeElement == null) {
+      return rTypeFactory.declaredTypeHasMustCall(param);
+    }
+    AnnotatedTypeMirror.AnnotatedDeclaredType declaredType = mustCallAnnotatedTypeFactory.getAnnotatedType(typeElement);
+
+    AnnotatedTypeMirror mustCallAnnotatedType = mustCallAnnotatedTypeFactory.getAnnotatedType(param);
+    AnnotationMirror declaredMustCallAnnotation = declaredType.getAnnotation(MustCall.class);
+    AnnotationMirror mustCallAnnotation = mustCallAnnotatedType.getAnnotation(MustCall.class);
+    AnnotationMirror mcLub = mustCallAnnotatedTypeFactory.getQualifierHierarchy().leastUpperBound(mustCallAnnotation, declaredMustCallAnnotation);
+    return !rTypeFactory.getMustCallValues(mcLub).isEmpty();
+  }
   /**
    * Runs the inference algorithm on the contents of the {@link #cfg} field.
    *
