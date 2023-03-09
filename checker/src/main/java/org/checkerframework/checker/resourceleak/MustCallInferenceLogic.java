@@ -204,7 +204,7 @@ public class MustCallInferenceLogic {
       VariableElement paramElement = TreeUtils.elementFromDeclaration(param);
       if (!rTypeFactory.hasMustCallAlias(paramElement)
           && paramElement.getAnnotation(Owning.class) == null) {
-        if (hasDeclaredMustCall(param)) {
+        if (rTypeFactory.declaredTypeHasMustCall(param)) {
           result.add(
               new Obligation(
                   ImmutableSet.of(new ResourceAlias(new LocalVariable(paramElement), param))));
@@ -467,7 +467,7 @@ public class MustCallInferenceLogic {
   }
 
   private void isOwningField(VariableElement receiverEl, MethodInvocationNode mNode) {
-    if (receiverEl != null && rTypeFactory.isCandidateOwningField(receiverEl)) {
+    if (receiverEl != null && (rTypeFactory.hasOwning(receiverEl) || rTypeFactory.isCandidateOwningField(receiverEl))) {
       Element method = TreeUtils.elementFromUse(mNode.getTree());
       List<String> mustCallValues = rTypeFactory.getMustCallValue(receiverEl);
       if (mustCallValues.size() == 1
@@ -656,7 +656,7 @@ public class MustCallInferenceLogic {
     }
 
     Element receiverEl = TreeUtils.elementFromTree(receiver.getTree());
-    if (receiverEl != null && rTypeFactory.isCandidateOwningField(receiverEl)) {
+    if (receiverEl != null && (rTypeFactory.hasOwning(receiverEl) || rTypeFactory.isCandidateOwningField(receiverEl))) {
       isOwningField((VariableElement) receiverEl, mNode);
     }
 

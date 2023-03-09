@@ -228,6 +228,9 @@ public class MustCallAnnotatedTypeFactory extends BaseAnnotatedTypeFactory
    */
   private void changeNonOwningParameterTypesToTop(
       ExecutableElement declaration, AnnotatedExecutableType type) {
+    if (getWholeProgramInference() != null) {
+      return;
+    }
     List<AnnotatedTypeMirror> parameterTypes = type.getParameterTypes();
     for (int i = 0; i < parameterTypes.size(); i++) {
       Element paramDecl = declaration.getParameters().get(i);
@@ -421,7 +424,7 @@ public class MustCallAnnotatedTypeFactory extends BaseAnnotatedTypeFactory
     @Override
     public Void visitIdentifier(IdentifierTree tree, AnnotatedTypeMirror type) {
       Element elt = TreeUtils.elementFromUse(tree);
-      if (elt.getKind() == ElementKind.PARAMETER
+      if (getWholeProgramInference() == null && elt.getKind() == ElementKind.PARAMETER
           && (noLightweightOwnership || getDeclAnnotation(elt, Owning.class) == null)) {
         type.replaceAnnotation(BOTTOM);
       }
