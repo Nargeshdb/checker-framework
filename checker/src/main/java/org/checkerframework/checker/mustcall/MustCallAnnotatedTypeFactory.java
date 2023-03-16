@@ -424,6 +424,9 @@ public class MustCallAnnotatedTypeFactory extends BaseAnnotatedTypeFactory
     @Override
     public Void visitIdentifier(IdentifierTree tree, AnnotatedTypeMirror type) {
       Element elt = TreeUtils.elementFromUse(tree);
+      if (getWholeProgramInference() != null && elt.getKind() == ElementKind.PARAMETER && getDeclAnnotation(elt, MustCallAlias.class) != null ) {
+        type.replaceAnnotation(BOTTOM);
+      }
       if (getWholeProgramInference() == null && elt.getKind() == ElementKind.PARAMETER
           && (noLightweightOwnership || getDeclAnnotation(elt, Owning.class) == null)) {
         type.replaceAnnotation(BOTTOM);

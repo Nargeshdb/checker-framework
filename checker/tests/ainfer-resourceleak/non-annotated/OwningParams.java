@@ -23,11 +23,11 @@ class OwningParams {
     @EnsuresCalledMethods(
         value = {"#1"},
         methods = {"a"})
-    void hasECM(@MustCall("a") Foo f) {
+    void hasECM(Foo f) {
       f.a();
     }
 
-    void owningFoo(@Owning @MustCall("a") Foo f) {
+    void owningFoo(@Owning Foo f) {
       f.a();
     }
 

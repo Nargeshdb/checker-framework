@@ -55,6 +55,8 @@ public class MustCallInferenceLogic {
   /** The @MustCallAlias annotation. */
   protected final AnnotationMirror MUSTCALLALIAS;
 
+  protected final AnnotationMirror NotOwning;
+
   /** The set of owning fields. */
   private Set<VariableElement> owningFields = new HashSet<>();
 
@@ -190,6 +192,7 @@ public class MustCallInferenceLogic {
         AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), MustCallAlias.class);
     MUSTCALL =
         AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), InheritableMustCall.class);
+    NotOwning = AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), NotOwning.class);
   }
 
   private Set<Obligation> getNonEmptyMCParams(ControlFlowGraph cfg) {
@@ -333,6 +336,14 @@ public class MustCallInferenceLogic {
     List<? extends VariableTree> params = method.getParameters();
     Node returnNode = node.getResult();
     returnNode = getTempVarOrNode(returnNode);
+
+    if (returnNode instanceof FieldAccessNode) {
+      if (!rTypeFactory.getMustCallValue(TreeUtils.elementFromTree(returnNode.getTree())).isEmpty()) {
+        ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
+        addNotOwning(methodElt);
+      }
+    }
+
     if (!(returnNode instanceof LocalVariableNode)) {
       return;
     }
@@ -429,6 +440,10 @@ public class MustCallInferenceLogic {
     }
   }
 
+  private void addNotOwning(ExecutableElement methodElt) {
+    WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+    wpi.addMethodDeclarationAnnotation(methodElt, NotOwning);
+  }
   private void addMustCallAlias(ExecutableElement methodElt, int index) {
     WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
     wpi.addMethodDeclarationAnnotation(methodElt, MUSTCALLALIAS);
@@ -467,7 +482,7 @@ public class MustCallInferenceLogic {
   }
 
   private void isOwningField(VariableElement receiverEl, MethodInvocationNode mNode) {
-    if (receiverEl != null && (rTypeFactory.hasOwning(receiverEl) || rTypeFactory.isCandidateOwningField(receiverEl))) {
+    if (receiverEl != null && ((rTypeFactory.hasOwning(receiverEl) && receiverEl.getKind().isField()) || rTypeFactory.isCandidateOwningField(receiverEl))) {
       Element method = TreeUtils.elementFromUse(mNode.getTree());
       List<String> mustCallValues = rTypeFactory.getMustCallValue(receiverEl);
       if (mustCallValues.size() == 1
@@ -812,7 +827,7 @@ public class MustCallInferenceLogic {
           wpi.addFieldDeclarationAnnotation(fieldElt, OWNING);
         }
         if (!owningFieldToECM.isEmpty()) {
-          addEnsuresCalledMethods(); // addEnsuresCalledMethods(receiverEl, methodElt, method);
+          addEnsuresCalledMethods();
         }
 
         if (!owningFields.isEmpty() && owningFields.size() == owningFieldToECM.size()) {
