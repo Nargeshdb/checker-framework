@@ -773,14 +773,13 @@ task ainferResourceLeakGenerateAjava(type: Test) {
     events 'passed', 'skipped', 'failed'
   }
 
-
-//          debugOptions {
-//              enabled = true
-//              host = 'localhost'
-//              port = 4455
-//              server = true
-//              suspend = true
-//          }
+  //          debugOptions {
+  //              enabled = true
+  //              host = 'localhost'
+  //              port = 4455
+  //              server = true
+  //              suspend = true
+  //          }
 
   doLast {
     copyNonannotatedToAnnotatedDirectory('ainfer-resourceleak')
@@ -801,6 +800,14 @@ task ainferResourceLeakValidateAjava(type: Test) {
     exceptionFormat 'full'
     events 'passed', 'skipped', 'failed'
   }
+
+  //    debugOptions {
+  //        enabled = true
+  //        host = 'localhost'
+  //        port = 5005
+  //        server = true
+  //        suspend = true
+  //    }
 }
 
 task ainferResourceLeakAjavaTest(dependsOn: 'shadowJar', group: 'Verification') {

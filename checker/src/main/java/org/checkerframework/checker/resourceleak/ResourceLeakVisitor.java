@@ -335,7 +335,7 @@ public class ResourceLeakVisitor extends CalledMethodsVisitor {
         if (siblingElement.getKind() == ElementKind.METHOD
             && enclosingMustCallValues.contains(siblingElement.getSimpleName().toString())) {
           AnnotationMirror ensuresCalledMethodsAnno =
-              rlTypeFactory.getDeclAnnotation(siblingElement, EnsuresCalledMethods.class);
+              getEnsuresCalledMethodsForField(siblingElement, field);
 
           if (ensuresCalledMethodsAnno != null) {
             List<String> values =
@@ -380,5 +380,22 @@ public class ResourceLeakVisitor extends CalledMethodsVisitor {
           field.asType().toString(),
           error);
     }
+  }
+
+  private AnnotationMirror getEnsuresCalledMethodsForField(Element methodElt, Element field) {
+    AnnotationMirrorSet declAnnos = rlTypeFactory.getDeclAnnotations(methodElt);
+    for (AnnotationMirror am : declAnnos) {
+      if (rlTypeFactory.areSameByClass(am, EnsuresCalledMethods.class)) {
+        List<String> values =
+            AnnotationUtils.getElementValueArray(
+                am, rlTypeFactory.ensuresCalledMethodsValueElement, String.class);
+        for (String value : values) {
+          if (value.contains(field.getSimpleName().toString())) {
+            return am;
+          }
+        }
+      }
+    }
+    return null;
   }
 }

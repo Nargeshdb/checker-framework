@@ -2,23 +2,25 @@ import org.checkerframework.checker.calledmethods.qual.*;
 import org.checkerframework.checker.mustcall.qual.*;
 
 class EnsuresCalledMethodsTest {
-  @InheritableMustCall("h")
+  @InheritableMustCall("a")
   static class Foo {
-    void h() {}
+    void a() {}
   }
 
   private class ECMWithNullCheck {
-    Foo ftest;
+    Foo foo;
 
-    //    void test() {
-    //      // :: warning: (required.method.not.called)
-    //      ftest = new Foo();
-    //    }
+    private void closePrivate() {
+      if (foo != null) {
+        foo.a();
+        foo = null;
+      }
+    }
 
     void close() {
-      if (ftest != null) {
-        ftest.h();
-        ftest = null;
+      if (foo != null) {
+        foo.a();
+        foo = null;
       }
     }
   }

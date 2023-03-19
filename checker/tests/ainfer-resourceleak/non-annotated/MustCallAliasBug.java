@@ -1,10 +1,10 @@
-//import org.checkerframework.checker.calledmethods.qual.*;
-//import org.checkerframework.checker.mustcall.qual.*;
-//import java.nio.channels.SocketChannel;
-//import java.net.Socket;
-//import java.io.IOException;
+// import org.checkerframework.checker.calledmethods.qual.*;
+// import org.checkerframework.checker.mustcall.qual.*;
+// import java.nio.channels.SocketChannel;
+// import java.net.Socket;
+// import java.io.IOException;
 //
-//class MustCallAliasBug {
+// class MustCallAliasBug {
 //
 //  @InheritableMustCall("a")
 //  static class Foo {
@@ -19,7 +19,8 @@
 //      f = f;
 //    }
 //
-//    @org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods(value = { "this.f" }, methods = { "a"})
+//    @org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods(value = { "this.f" },
+// methods = { "a"})
 //    public void a() {
 //      f.a();
 //    }
@@ -43,7 +44,8 @@
 //
 //
 //    @Override
-//    @org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods(value = { "this.channel" }, methods = { "close"})
+//    @org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods(value = { "this.channel"
+// }, methods = { "close"})
 //    public void a() {
 //      try {
 //        channel.close();
@@ -52,4 +54,4 @@
 //    }
 //  }
 //
-//}
+// }

@@ -11,11 +11,10 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import org.checkerframework.checker.calledmethods.qual.EnsuresCalledMethods;
-import org.checkerframework.checker.mustcall.MustCallAnnotatedTypeFactory;
-import org.checkerframework.checker.mustcall.MustCallChecker;
 import org.checkerframework.checker.mustcall.qual.*;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.wholeprograminference.WholeProgramInference;
@@ -30,7 +29,6 @@ import org.checkerframework.dataflow.expression.LocalVariable;
 import org.checkerframework.dataflow.util.NodeUtils;
 import org.checkerframework.framework.flow.CFStore;
 import org.checkerframework.framework.flow.CFValue;
-import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.javacutil.*;
 
 /**
@@ -64,6 +62,10 @@ public class MustCallInferenceLogic {
 
   /** The control flow graph. */
   private final ControlFlowGraph cfg;
+
+  private MethodTree enMethodTree;
+
+  private ExecutableElement enMethodElt;
 
   //  private final MustCallConsistencyAnalyzer mccAnalyzer;
 
@@ -193,6 +195,8 @@ public class MustCallInferenceLogic {
     MUSTCALL =
         AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), InheritableMustCall.class);
     NotOwning = AnnotationBuilder.fromClass(this.rTypeFactory.getElementUtils(), NotOwning.class);
+    enMethodTree = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
+    enMethodElt = TreeUtils.elementFromDeclaration(enMethodTree);
   }
 
   private Set<Obligation> getNonEmptyMCParams(ControlFlowGraph cfg) {
@@ -200,10 +204,9 @@ public class MustCallInferenceLogic {
     if (cfg.getUnderlyingAST().getKind() != UnderlyingAST.Kind.METHOD) {
       return Collections.emptySet();
     }
-    MethodTree method = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
     Set<Obligation> result = new LinkedHashSet<>(1);
-    for (int i = 0; i < method.getParameters().size(); i++) {
-      VariableTree param = method.getParameters().get(i);
+    for (int i = 0; i < enMethodTree.getParameters().size(); i++) {
+      VariableTree param = enMethodTree.getParameters().get(i);
       VariableElement paramElement = TreeUtils.elementFromDeclaration(param);
       if (!rTypeFactory.hasMustCallAlias(paramElement)
           && paramElement.getAnnotation(Owning.class) == null) {
@@ -213,31 +216,16 @@ public class MustCallInferenceLogic {
                   ImmutableSet.of(new ResourceAlias(new LocalVariable(paramElement), param))));
         }
       } else {
-        ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
         if (rTypeFactory.hasMustCallAlias(paramElement)) {
-          addMustCallAlias(methodElt, i);
+          addMustCallAlias(enMethodElt, i);
         } else if (paramElement.getAnnotation(Owning.class) != null) {
-          addOwningOnParams(methodElt, i);
+          addOwningOnParams(enMethodElt, i);
         }
       }
     }
     return result;
   }
 
-  private boolean hasDeclaredMustCall(VariableTree param) {
-    MustCallAnnotatedTypeFactory mustCallAnnotatedTypeFactory = rTypeFactory.getTypeFactoryOfSubchecker(MustCallChecker.class);
-    TypeElement typeElement = TypesUtils.getTypeElement(JavaExpression.fromVariableTree(param).getType());
-    if (typeElement == null) {
-      return rTypeFactory.declaredTypeHasMustCall(param);
-    }
-    AnnotatedTypeMirror.AnnotatedDeclaredType declaredType = mustCallAnnotatedTypeFactory.getAnnotatedType(typeElement);
-
-    AnnotatedTypeMirror mustCallAnnotatedType = mustCallAnnotatedTypeFactory.getAnnotatedType(param);
-    AnnotationMirror declaredMustCallAnnotation = declaredType.getAnnotation(MustCall.class);
-    AnnotationMirror mustCallAnnotation = mustCallAnnotatedType.getAnnotation(MustCall.class);
-    AnnotationMirror mcLub = mustCallAnnotatedTypeFactory.getQualifierHierarchy().leastUpperBound(mustCallAnnotation, declaredMustCallAnnotation);
-    return !rTypeFactory.getMustCallValues(mcLub).isEmpty();
-  }
   /**
    * Runs the inference algorithm on the contents of the {@link #cfg} field.
    *
@@ -332,15 +320,15 @@ public class MustCallInferenceLogic {
   }
 
   private void checkReturnNode(Set<Obligation> obligations, ReturnNode node) {
-    MethodTree method = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
-    List<? extends VariableTree> params = method.getParameters();
+    List<? extends VariableTree> params = enMethodTree.getParameters();
     Node returnNode = node.getResult();
     returnNode = getTempVarOrNode(returnNode);
 
     if (returnNode instanceof FieldAccessNode) {
-      if (!rTypeFactory.getMustCallValue(TreeUtils.elementFromTree(returnNode.getTree())).isEmpty()) {
-        ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
-        addNotOwning(methodElt);
+      if (!rTypeFactory
+          .getMustCallValue(TreeUtils.elementFromTree(returnNode.getTree()))
+          .isEmpty()) {
+        addNotOwning(enMethodElt);
       }
     }
 
@@ -358,11 +346,22 @@ public class MustCallInferenceLogic {
       for (int i = 0; i < params.size(); i++) {
         VariableElement paramElt = TreeUtils.elementFromDeclaration(params.get(i));
         if (returnElt.equals(paramElt)) {
-          ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
-          addMustCallAlias(methodElt, i);
+          addMustCallAlias(enMethodElt, i);
         }
       }
     }
+  }
+
+  private Set<VariableElement> getEnclosedOwningFields() {
+    ClassTree classTree = TreePathUtil.enclosingClass(rTypeFactory.getPath(enMethodTree));
+    TypeElement classElt = TreeUtils.elementFromDeclaration(classTree);
+    Set<VariableElement> enOwningFields = new HashSet<>();
+    for (Element memberElt : classElt.getEnclosedElements()) {
+      if (memberElt.getKind().isField() && rTypeFactory.hasOwning(memberElt)) {
+        enOwningFields.add((VariableElement) memberElt);
+      }
+    }
+    return enOwningFields;
   }
 
   private void updateObligationsForAssignment(
@@ -373,8 +372,6 @@ public class MustCallInferenceLogic {
     Node rhs = NodeUtils.removeCasts(assignmentNode.getExpression());
     rhs = getTempVarOrNode(rhs);
 
-    MethodTree method = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
-
     if (lhsElement.getKind() == ElementKind.FIELD) {
       if (rTypeFactory.getDeclAnnotation(lhsElement, Owning.class) == null
           && !owningFields.contains(lhsElement)) {
@@ -382,7 +379,7 @@ public class MustCallInferenceLogic {
       }
 
       owningFields.add((VariableElement) lhsElement);
-      if (TreeUtils.isConstructor(method)) {
+      if (TreeUtils.isConstructor(enMethodTree)) {
         if (!(rhs instanceof LocalVariableNode)) {
           return;
         }
@@ -393,12 +390,16 @@ public class MustCallInferenceLogic {
         Set<ResourceAlias> rhsAliases = rhsObligation.resourceAliases;
         for (ResourceAlias rl : rhsAliases) {
           Element rhdElt = rl.reference.getElement();
-          List<? extends VariableTree> params = method.getParameters();
+          List<? extends VariableTree> params = enMethodTree.getParameters();
+          Set<VariableElement> enOwningFields = getEnclosedOwningFields();
           for (int i = 0; i < params.size(); i++) {
             VariableElement paramElt = TreeUtils.elementFromDeclaration(params.get(i));
             if (paramElt.equals(rhdElt)) {
-              ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
-              addMustCallAlias(methodElt, i);
+              if (enOwningFields.size() == 1) {
+                addMustCallAlias(enMethodElt, i);
+              } else {
+                addOwningOnParams(enMethodElt, i);
+              }
               removeObligationsContainingVar(obligations, (LocalVariableNode) rhs);
               break;
             }
@@ -409,9 +410,8 @@ public class MustCallInferenceLogic {
             new AnnotationBuilder(rTypeFactory.getProcessingEnv(), CreatesMustCallFor.class);
         builder.setValue("value", "this");
         AnnotationMirror am = builder.build();
-        ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
         WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-        wpi.addMethodDeclarationAnnotation(methodElt, am);
+        wpi.addMethodDeclarationAnnotation(enMethodElt, am);
         if (owningFieldToECM.contains((VariableElement) lhsElement)) {
           owningFieldToECM.remove((VariableElement) lhsElement);
         }
@@ -444,6 +444,7 @@ public class MustCallInferenceLogic {
     WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
     wpi.addMethodDeclarationAnnotation(methodElt, NotOwning);
   }
+
   private void addMustCallAlias(ExecutableElement methodElt, int index) {
     WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
     wpi.addMethodDeclarationAnnotation(methodElt, MUSTCALLALIAS);
@@ -482,7 +483,11 @@ public class MustCallInferenceLogic {
   }
 
   private void isOwningField(VariableElement receiverEl, MethodInvocationNode mNode) {
-    if (receiverEl != null && ((rTypeFactory.hasOwning(receiverEl) && receiverEl.getKind().isField()) || rTypeFactory.isCandidateOwningField(receiverEl))) {
+    if (receiverEl == null) {
+      return;
+    }
+    if (((rTypeFactory.hasOwning(receiverEl) && receiverEl.getKind().isField())
+        || rTypeFactory.isCandidateOwningField(receiverEl))) {
       Element method = TreeUtils.elementFromUse(mNode.getTree());
       List<String> mustCallValues = rTypeFactory.getMustCallValue(receiverEl);
       if (mustCallValues.size() == 1
@@ -492,14 +497,11 @@ public class MustCallInferenceLogic {
         owningFields.add(receiverEl);
         owningFieldToECM.add(receiverEl);
       }
-    } else {
-
     }
   }
 
   private void addEnsuresCalledMethods() {
-    MethodTree enMethod = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
-    ExecutableElement enclosignMethodElt = TreeUtils.elementFromDeclaration(enMethod);
+    ExecutableElement enclosignMethodElt = TreeUtils.elementFromDeclaration(enMethodTree);
     String[] values = new String[owningFieldToECM.size()];
     String[] methods = new String[] {null};
     int index = 0;
@@ -518,24 +520,19 @@ public class MustCallInferenceLogic {
   }
 
   private void addOrUpdateMustCall() {
-    MethodTree enMethod = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
     AnnotationBuilder builder =
         new AnnotationBuilder(rTypeFactory.getProcessingEnv(), InheritableMustCall.class);
-    String[] methodArray = new String[] {enMethod.getName().toString()};
+    String[] methodArray = new String[] {enMethodTree.getName().toString()};
     Arrays.sort(methodArray);
     builder.setValue("value", methodArray);
-    ClassTree classTree = TreePathUtil.enclosingClass(rTypeFactory.getPath(enMethod));
+    ClassTree classTree = TreePathUtil.enclosingClass(rTypeFactory.getPath(enMethodTree));
     TypeElement typeElement = TreeUtils.elementFromDeclaration(classTree);
-    if (rTypeFactory.getMustCallValue(typeElement).isEmpty()) {
+    if (typeElement != null
+        && rTypeFactory.getMustCallValue(typeElement).isEmpty()
+        && !enMethodTree.getModifiers().getFlags().contains(Modifier.PRIVATE)) {
       WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
       wpi.addClassDeclarationAnnotation(typeElement, builder.build());
     }
-    //    else {
-    //      builder = new AnnotationBuilder(rTypeFactory.getProcessingEnv(), MustCall.class);
-    //      builder.setValue("value", rTypeFactory.getMustCallValue(typeElement));
-    //      WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-    //      wpi.addClassDeclarationAnnotation(typeElement, builder.build());
-    //    }
   }
 
   private void checkArgsOfMethodCall(
@@ -649,7 +646,14 @@ public class MustCallInferenceLogic {
           if (TreeUtils.isSuperConstructorCall(mNode.getTree())
               || TreeUtils.isThisConstructorCall(mNode.getTree())) {
             if (rTypeFactory.hasMustCallAlias(parameters.get(i))) {
-              addMustCallAlias(methodElt, j);
+              if (getEnclosedOwningFields().size() <= 1) {
+                addMustCallAlias(methodElt, j);
+              } else {
+                addOwningOnParams(methodElt, j);
+              }
+            } else if (rTypeFactory.hasOwning(parameters.get(i))
+                || getEnclosedOwningFields().size() > 1) {
+              addOwningOnParams(methodElt, j);
             }
           } else if (rTypeFactory.hasOwning(parameters.get(i))) {
             addOwningOnParams(methodElt, j);
@@ -671,7 +675,9 @@ public class MustCallInferenceLogic {
     }
 
     Element receiverEl = TreeUtils.elementFromTree(receiver.getTree());
-    if (receiverEl != null && (rTypeFactory.hasOwning(receiverEl) || rTypeFactory.isCandidateOwningField(receiverEl))) {
+    if (receiverEl != null
+        && (rTypeFactory.hasOwning(receiverEl)
+            || rTypeFactory.isCandidateOwningField(receiverEl))) {
       isOwningField((VariableElement) receiverEl, mNode);
     }
 
@@ -777,9 +783,7 @@ public class MustCallInferenceLogic {
    * @param mNode the MethodInvocationNode
    */
   private void checkMethodInvocation(Set<Obligation> obligations, MethodInvocationNode mNode) {
-    MethodTree enMethod = ((UnderlyingAST.CFGMethod) cfg.getUnderlyingAST()).getMethod();
-    ExecutableElement methodElt = TreeUtils.elementFromDeclaration(enMethod);
-    if (methodElt == null) {
+    if (enMethodElt == null) {
       return;
     }
 
@@ -789,14 +793,14 @@ public class MustCallInferenceLogic {
       builder.setValue("value", "this");
       AnnotationMirror am = builder.build();
       WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-      wpi.addMethodDeclarationAnnotation(methodElt, am);
+      wpi.addMethodDeclarationAnnotation(enMethodElt, am);
     }
 
-    List<? extends VariableTree> paramsOfEnclosingMethod = enMethod.getParameters();
+    List<? extends VariableTree> paramsOfEnclosingMethod = enMethodTree.getParameters();
 
-    checkArgsOfMethodCall(obligations, methodElt, mNode, paramsOfEnclosingMethod);
-    checkReceiverOfMethodCall(obligations, methodElt, mNode, paramsOfEnclosingMethod);
-    checkIndirectCalls(methodElt, mNode, paramsOfEnclosingMethod);
+    checkArgsOfMethodCall(obligations, enMethodElt, mNode, paramsOfEnclosingMethod);
+    checkReceiverOfMethodCall(obligations, enMethodElt, mNode, paramsOfEnclosingMethod);
+    checkIndirectCalls(enMethodElt, mNode, paramsOfEnclosingMethod);
   }
 
   /**
