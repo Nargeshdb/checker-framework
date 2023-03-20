@@ -575,10 +575,11 @@ public class MustCallInferenceLogic {
         List<Node> arrays = arrayCreationNode.getInitializers();
         for (Node n : arrays) {
           Element nElt = TreeUtils.elementFromTree(n.getTree());
-          if (nElt == null) {
-            continue;
-          }
-          if (!rTypeFactory.hasOwning(nElt) && !rTypeFactory.isCandidateOwningField(nElt)) {
+          if (nElt == null
+              || rTypeFactory
+                  .getMustCallValue(nElt)
+                  .isEmpty()) { // !rTypeFactory.hasOwning(nElt) &&
+            // !rTypeFactory.isCandidateOwningField(nElt)
             continue;
           }
           CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
@@ -605,15 +606,17 @@ public class MustCallInferenceLogic {
           AnnotationMirror cmAnnoForMustCallMethods =
               rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
           if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
-            owningFields.add((VariableElement) nElt);
-            owningFieldToECM.add((VariableElement) nElt);
+            if ((rTypeFactory.hasOwning(nElt) && nElt.getKind().isField())
+                || rTypeFactory.isCandidateOwningField(nElt)) {
+              owningFields.add((VariableElement) nElt);
+              owningFieldToECM.add((VariableElement) nElt);
+            }
             // TODO infer @MustCall and @EnsuresCalledMethods
           }
         }
       }
 
-      if (argElt != null
-          && (rTypeFactory.hasOwning(argElt) || rTypeFactory.isCandidateOwningField(argElt))) {
+      if (argElt != null && !rTypeFactory.getMustCallValue(argElt).isEmpty()) {
         CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
         JavaExpression target = JavaExpression.fromNode(arg);
         CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
@@ -638,8 +641,11 @@ public class MustCallInferenceLogic {
         AnnotationMirror cmAnnoForMustCallMethods =
             rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
         if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
-          owningFields.add((VariableElement) argElt);
-          owningFieldToECM.add((VariableElement) argElt);
+          if ((rTypeFactory.hasOwning(argElt) && argElt.getKind().isField())
+              || rTypeFactory.isCandidateOwningField(argElt)) {
+            owningFields.add((VariableElement) argElt);
+            owningFieldToECM.add((VariableElement) argElt);
+          }
           // TODO infer @MustCall and @EnsuresCalledMethods
         }
       }
