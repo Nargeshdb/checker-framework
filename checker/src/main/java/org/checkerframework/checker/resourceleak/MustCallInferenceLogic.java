@@ -415,6 +415,27 @@ public class MustCallInferenceLogic {
         if (owningFieldToECM.contains((VariableElement) lhsElement)) {
           owningFieldToECM.remove((VariableElement) lhsElement);
         }
+
+        if (!(rhs instanceof LocalVariableNode)) {
+          return;
+        }
+        Obligation rhsObligation = getObligationForVar(obligations, (LocalVariableNode) rhs);
+        if (rhsObligation == null) {
+          return;
+        }
+        Set<ResourceAlias> rhsAliases = rhsObligation.resourceAliases;
+        for (ResourceAlias rl : rhsAliases) {
+          Element rhdElt = rl.reference.getElement();
+          List<? extends VariableTree> params = enMethodTree.getParameters();
+          for (int i = 0; i < params.size(); i++) {
+            VariableElement paramElt = TreeUtils.elementFromDeclaration(params.get(i));
+            if (paramElt.equals(rhdElt)) {
+              addOwningOnParams(enMethodElt, i);
+              removeObligationsContainingVar(obligations, (LocalVariableNode) rhs);
+              break;
+            }
+          }
+        }
       }
 
     } else if (lhs instanceof LocalVariableNode) {
