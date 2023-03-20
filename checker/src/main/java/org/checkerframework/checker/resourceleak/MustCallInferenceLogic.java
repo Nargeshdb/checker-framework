@@ -615,7 +615,7 @@ public class MustCallInferenceLogic {
       }
 
       if (argElt != null
-          && (rTypeFactory.hasOwning(argElt) && argElt.getKind().isField()
+          && ((rTypeFactory.hasOwning(argElt) && argElt.getKind().isField())
               || rTypeFactory.isCandidateOwningField(argElt))) {
         CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
         JavaExpression target = JavaExpression.fromNode(arg);
