@@ -578,32 +578,10 @@ public class MustCallInferenceLogic {
           if (nElt == null) {
             continue;
           }
-          if ((rTypeFactory.hasOwning(argElt) && argElt.getKind().isField())
-              || rTypeFactory.isCandidateOwningField(argElt)) {
-            CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
+          if ((nElt.getKind().isField() && rTypeFactory.hasOwning(nElt))
+              || rTypeFactory.isCandidateOwningField(nElt)) {
             JavaExpression target = JavaExpression.fromNode(n);
-            CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
-
-            AnnotationMirror cmAnno = null;
-            if (cmValue != null) {
-              for (AnnotationMirror anno : cmValue.getAnnotations()) {
-                if (AnnotationUtils.areSameByName(
-                    anno, "org.checkerframework.checker.calledmethods.qual.CalledMethods")) {
-                  cmAnno = anno;
-                  break;
-                }
-              }
-            }
-
-            if (cmAnno == null) {
-              cmAnno = rTypeFactory.top;
-            }
-
-            List<String> mustCallValues = rTypeFactory.getMustCallValue(nElt);
-
-            AnnotationMirror cmAnnoForMustCallMethods =
-                rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
-            if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+            if (mustCallObligationSatisfied(mNode, nElt, target)) {
               if ((rTypeFactory.hasOwning(nElt) && nElt.getKind().isField())
                   || rTypeFactory.isCandidateOwningField(nElt)) {
                 owningFields.add((VariableElement) nElt);
@@ -618,30 +596,9 @@ public class MustCallInferenceLogic {
       if (argElt != null
           && ((rTypeFactory.hasOwning(argElt) && argElt.getKind().isField())
               || rTypeFactory.isCandidateOwningField(argElt))) {
-        CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
         JavaExpression target = JavaExpression.fromNode(arg);
-        CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
 
-        AnnotationMirror cmAnno = null;
-        if (cmValue != null) {
-          for (AnnotationMirror anno : cmValue.getAnnotations()) {
-            if (AnnotationUtils.areSameByName(
-                anno, "org.checkerframework.checker.calledmethods.qual.CalledMethods")) {
-              cmAnno = anno;
-              break;
-            }
-          }
-        }
-
-        if (cmAnno == null) {
-          cmAnno = rTypeFactory.top;
-        }
-
-        List<String> mustCallValues = rTypeFactory.getMustCallValue(argElt);
-
-        AnnotationMirror cmAnnoForMustCallMethods =
-            rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
-        if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+        if (mustCallObligationSatisfied(mNode, argElt, target)) {
           owningFields.add((VariableElement) argElt);
           owningFieldToECM.add((VariableElement) argElt);
           // TODO infer @MustCall and @EnsuresCalledMethods
@@ -687,30 +644,8 @@ public class MustCallInferenceLogic {
           } else if (rTypeFactory.hasOwning(parameters.get(i))) {
             addOwningOnParams(methodElt, j);
           } else {
-            CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
             JavaExpression target = JavaExpression.fromNode(tempVar);
-            CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
-
-            AnnotationMirror cmAnno = null;
-            if (cmValue != null) {
-              for (AnnotationMirror anno : cmValue.getAnnotations()) {
-                if (AnnotationUtils.areSameByName(
-                    anno, "org.checkerframework.checker.calledmethods.qual.CalledMethods")) {
-                  cmAnno = anno;
-                  break;
-                }
-              }
-            }
-
-            if (cmAnno == null) {
-              cmAnno = rTypeFactory.top;
-            }
-
-            List<String> mustCallValues = rTypeFactory.getMustCallValue(paramElt);
-
-            AnnotationMirror cmAnnoForMustCallMethods =
-                rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
-            if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+            if (mustCallObligationSatisfied(mNode, paramElt, target)) {
               addOwningOnParams(methodElt, j);
               // TODO infer @MustCall and @EnsuresCalledMethods
             }
@@ -718,6 +653,35 @@ public class MustCallInferenceLogic {
         }
       }
     }
+  }
+
+  private boolean mustCallObligationSatisfied(
+      MethodInvocationNode mNode, Element varElt, JavaExpression target) {
+    CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
+    CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
+    AnnotationMirror cmAnno = null;
+    if (cmValue != null) {
+      for (AnnotationMirror anno : cmValue.getAnnotations()) {
+        if (AnnotationUtils.areSameByName(
+            anno, "org.checkerframework.checker.calledmethods.qual.CalledMethods")) {
+          cmAnno = anno;
+          break;
+        }
+      }
+    }
+
+    if (cmAnno == null) {
+      cmAnno = rTypeFactory.top;
+    }
+
+    List<String> mustCallValues = rTypeFactory.getMustCallValue(varElt);
+
+    AnnotationMirror cmAnnoForMustCallMethods =
+        rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
+    if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+      return true;
+    }
+    return false;
   }
 
   private void checkReceiverOfMethodCall(
@@ -765,27 +729,8 @@ public class MustCallInferenceLogic {
           return;
         }
 
-        CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
         JavaExpression target = JavaExpression.fromVariableTree(paramsOfEnclosingMethod.get(i));
-        CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
-
-        AnnotationMirror cmAnno = null;
-        if (cmValue != null) {
-          for (AnnotationMirror anno : cmValue.getAnnotations()) {
-            if (AnnotationUtils.areSameByName(
-                anno, "org.checkerframework.checker.calledmethods.qual.CalledMethods")) {
-              cmAnno = anno;
-              break;
-            }
-          }
-        }
-        if (cmAnno == null) {
-          cmAnno = rTypeFactory.top;
-        }
-
-        AnnotationMirror cmAnnoForMustCallMethods =
-            rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
-        if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+        if (mustCallObligationSatisfied(mNode, paramElt, target)) {
           addOwningOnParams(methodElt, i);
         }
       }
@@ -805,28 +750,8 @@ public class MustCallInferenceLogic {
         return;
       }
 
-      CFStore cmStoreAfter = rTypeFactory.getStoreAfter(mNode);
       JavaExpression target = JavaExpression.fromVariableTree(paramsOfEnclosingMethod.get(i));
-      CFValue cmValue = cmStoreAfter == null ? null : cmStoreAfter.getValue(target);
-
-      AnnotationMirror cmAnno = null;
-      if (cmValue != null) {
-        for (AnnotationMirror anno : cmValue.getAnnotations()) {
-          if (AnnotationUtils.areSameByName(
-              anno, "org.checkerframework.checker.calledmethods.qual.CalledMethods")) {
-            cmAnno = anno;
-            break;
-          }
-        }
-      }
-
-      if (cmAnno == null) {
-        cmAnno = rTypeFactory.top;
-      }
-
-      AnnotationMirror cmAnnoForMustCallMethods =
-          rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
-      if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+      if (mustCallObligationSatisfied(mNode, paramElt, target)) {
         addOwningOnParams(methodElt, i);
       }
     }
