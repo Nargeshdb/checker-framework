@@ -516,7 +516,7 @@ public class MustCallInferenceLogic {
         // This assumes that any MustCall annotation has at most one element.
         // TODO: generalize this to MustCall annotations with more than one element.
         owningFields.add(receiverEl);
-        owningFieldToECM.add(receiverEl);
+        //        owningFieldToECM.add(receiverEl);
       }
     }
   }
@@ -678,7 +678,8 @@ public class MustCallInferenceLogic {
 
     AnnotationMirror cmAnnoForMustCallMethods =
         rTypeFactory.createCalledMethods(mustCallValues.toArray(new String[0]));
-    if (rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
+    if (!mustCallValues.isEmpty()
+        && rTypeFactory.getQualifierHierarchy().isSubtype(cmAnno, cmAnnoForMustCallMethods)) {
       return true;
     }
     return false;
