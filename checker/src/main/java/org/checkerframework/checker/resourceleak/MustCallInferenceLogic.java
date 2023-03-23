@@ -29,6 +29,8 @@ import org.checkerframework.dataflow.expression.LocalVariable;
 import org.checkerframework.dataflow.util.NodeUtils;
 import org.checkerframework.framework.flow.CFStore;
 import org.checkerframework.framework.flow.CFValue;
+import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
+import org.checkerframework.framework.util.AnnotatedTypes;
 import org.checkerframework.javacutil.*;
 
 /**
@@ -406,12 +408,7 @@ public class MustCallInferenceLogic {
           }
         }
       } else if (!(rhs instanceof NullLiteralNode)) {
-        AnnotationBuilder builder =
-            new AnnotationBuilder(rTypeFactory.getProcessingEnv(), CreatesMustCallFor.class);
-        builder.setValue("value", "this");
-        AnnotationMirror am = builder.build();
-        WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-        wpi.addMethodDeclarationAnnotation(enMethodElt, am);
+        addCreatesMustCallFor();
         if (owningFieldToECM.contains((VariableElement) lhsElement)) {
           owningFieldToECM.remove((VariableElement) lhsElement);
         }
@@ -458,6 +455,22 @@ public class MustCallInferenceLogic {
       } else {
         // TODO killing assignment
       }
+    }
+  }
+
+  private void addCreatesMustCallFor() {
+    AnnotationBuilder builder =
+        new AnnotationBuilder(rTypeFactory.getProcessingEnv(), CreatesMustCallFor.class);
+    builder.setValue("value", "this");
+    AnnotationMirror am = builder.build();
+    WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+    wpi.addMethodDeclarationAnnotation(enMethodElt, am);
+
+    Map<AnnotatedDeclaredType, ExecutableElement> overriddenMethods =
+        AnnotatedTypes.overriddenMethods(rTypeFactory.getElementUtils(), rTypeFactory, enMethodElt);
+
+    for (ExecutableElement overriddenMethod : overriddenMethods.values()) {
+      wpi.addMethodDeclarationAnnotation(overriddenMethod, am);
     }
   }
 
@@ -771,12 +784,7 @@ public class MustCallInferenceLogic {
     }
 
     if (rTypeFactory.hasCreatesMustCallFor(mNode)) {
-      AnnotationBuilder builder =
-          new AnnotationBuilder(rTypeFactory.getProcessingEnv(), CreatesMustCallFor.class);
-      builder.setValue("value", "this");
-      AnnotationMirror am = builder.build();
-      WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-      wpi.addMethodDeclarationAnnotation(enMethodElt, am);
+      addCreatesMustCallFor();
     }
 
     List<? extends VariableTree> paramsOfEnclosingMethod = enMethodTree.getParameters();

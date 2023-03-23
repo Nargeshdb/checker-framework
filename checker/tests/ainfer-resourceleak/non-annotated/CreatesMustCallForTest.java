@@ -47,4 +47,34 @@ class CreatesMustCallForTest {
       f.a();
     }
   }
+
+  abstract class SuperClass {
+
+    // :: warning: (creates.mustcall.for.invalid.target)
+    abstract void overriddenMethod();
+
+    abstract void a();
+  }
+
+  @InheritableMustCall("a")
+  private class SubClass extends SuperClass {
+    @Owning Foo f; // expect owning annotation for this field
+
+    public SubClass() {}
+
+    @Override
+    // :: warning: (missing.creates.mustcall.for)
+    void overriddenMethod() {
+      f.a();
+      f = new Foo();
+    }
+
+    @Override
+    @EnsuresCalledMethods(
+        value = {"this.f"},
+        methods = {"a"})
+    void a() {
+      f.a();
+    }
+  }
 }
