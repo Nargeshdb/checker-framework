@@ -327,9 +327,8 @@ public class MustCallInferenceLogic {
     returnNode = getTempVarOrNode(returnNode);
 
     if (returnNode instanceof FieldAccessNode) {
-      if (!rTypeFactory
-          .getMustCallValue(TreeUtils.elementFromTree(returnNode.getTree()))
-          .isEmpty()) {
+      if (!rTypeFactory.getMustCallValue(TreeUtils.elementFromTree(returnNode.getTree())).isEmpty()
+          || rTypeFactory.hasOwning(TreeUtils.elementFromTree(returnNode.getTree()))) {
         addNotOwning(enMethodElt);
       }
     }
@@ -542,6 +541,10 @@ public class MustCallInferenceLogic {
     for (VariableElement ve : owningFieldToECM) {
       values[index++] = "this." + ve.getSimpleName().toString();
       // we assume that if we have multiple fields they all have the same must call obligation
+      List<String> mustCallValues = rTypeFactory.getMustCallValue(ve);
+      if (mustCallValues.size() == 0) {
+        continue;
+      }
       methods[0] = rTypeFactory.getMustCallValue(ve).get(0);
     }
     AnnotationBuilder builder =
