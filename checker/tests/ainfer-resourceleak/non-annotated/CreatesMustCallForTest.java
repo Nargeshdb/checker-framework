@@ -50,7 +50,6 @@ class CreatesMustCallForTest {
 
   abstract class SuperClass {
 
-    // :: warning: (creates.mustcall.for.invalid.target)
     abstract void overriddenMethod();
 
     abstract void a();

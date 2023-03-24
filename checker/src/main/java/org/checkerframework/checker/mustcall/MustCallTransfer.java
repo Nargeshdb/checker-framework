@@ -3,6 +3,7 @@ package org.checkerframework.checker.mustcall;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IdentifierTree;
+import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import java.util.List;
@@ -171,6 +172,16 @@ public class MustCallTransfer extends CFTransfer {
     CFValue newValue = defaultTypeAsCFValue.leastUpperBound(value);
     store.clearValue(expr);
     store.insertValue(expr, newValue);
+  }
+
+  @Override
+  protected boolean shouldPerformWholeProgramInference(Tree tree) {
+    return false;
+  }
+
+  @Override
+  protected boolean shouldPerformWholeProgramInference(Tree expressionTree, Tree lhsTree) {
+    return false;
   }
 
   @Override
