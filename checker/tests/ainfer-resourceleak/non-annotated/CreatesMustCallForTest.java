@@ -1,6 +1,9 @@
 import org.checkerframework.checker.calledmethods.qual.*;
 import org.checkerframework.checker.mustcall.qual.*;
 
+@SuppressWarnings(
+    "all") // Currently CMCF inference is disabled. Remember to fix the :: before the expected
+// warnings in this test when re-enabling it.
 class CreatesMustCallForTest {
   @InheritableMustCall("a")
   static class Foo {
@@ -11,7 +14,7 @@ class CreatesMustCallForTest {
   static class NonFinalOwningField {
     @Owning Foo f; // expect owning annotation for this field
 
-    // :: warning: (missing.creates.mustcall.for)
+    // : : warning: (missing.creates.mustcall.for)
     void initialyzeFooWithoutCMCF() {
       f.a();
       f = new Foo();
@@ -61,7 +64,7 @@ class CreatesMustCallForTest {
     public SubClass() {}
 
     @Override
-    // :: warning: (missing.creates.mustcall.for)
+    // : : warning: (missing.creates.mustcall.for)
     void overriddenMethod() {
       f.a();
       f = new Foo();
