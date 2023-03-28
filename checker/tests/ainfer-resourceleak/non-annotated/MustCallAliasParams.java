@@ -1,7 +1,6 @@
 import org.checkerframework.checker.calledmethods.qual.*;
 import org.checkerframework.checker.mustcall.qual.*;
 
-@SuppressWarnings("annotations.on.use") // TODO: Martin will investigate
 class MustCallAliasParams {
 
   @InheritableMustCall("a")
