@@ -559,22 +559,28 @@ public class MustCallInferenceLogic {
   private void addOrUpdateMustCall() {
     ClassTree classTree = TreePathUtil.enclosingClass(rTypeFactory.getPath(enMethodTree));
     TypeElement typeElement = TreeUtils.elementFromDeclaration(classTree);
-    if (typeElement != null
-        //        && rTypeFactory.getMustCallValue(typeElement).isEmpty()
-        && !enMethodTree.getModifiers().getFlags().contains(Modifier.PRIVATE)) {
-      WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-      List<String> currentMustCallValues = rTypeFactory.getMustCallValue(typeElement);
-      if (currentMustCallValues.isEmpty()) {
+    if (typeElement == null) {
+      return;
+    }
+    WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
+    List<String> currentMustCallValues = rTypeFactory.getMustCallValue(typeElement);
+    if (!currentMustCallValues.isEmpty()) {
+      AnnotationBuilder builder =
+          new AnnotationBuilder(rTypeFactory.getProcessingEnv(), InheritableMustCall.class);
+      String[] methodArray = new String[] {currentMustCallValues.get(0).toString()};
+      Arrays.sort(methodArray);
+      builder.setValue("value", methodArray);
+      wpi.addClassDeclarationAnnotation(typeElement, builder.build());
+      return;
+    }
+
+    if (!enMethodTree.getModifiers().getFlags().contains(Modifier.PRIVATE)) {
+      if (!owningFields.isEmpty()
+          && owningFieldToECM.size() == owningFields.size()
+          && owningFields.size() >= getEnclosedOwningFields().size()) {
         AnnotationBuilder builder =
             new AnnotationBuilder(rTypeFactory.getProcessingEnv(), InheritableMustCall.class);
         String[] methodArray = new String[] {enMethodTree.getName().toString()};
-        Arrays.sort(methodArray);
-        builder.setValue("value", methodArray);
-        wpi.addClassDeclarationAnnotation(typeElement, builder.build());
-      } else {
-        AnnotationBuilder builder =
-            new AnnotationBuilder(rTypeFactory.getProcessingEnv(), InheritableMustCall.class);
-        String[] methodArray = new String[] {currentMustCallValues.get(0).toString()};
         Arrays.sort(methodArray);
         builder.setValue("value", methodArray);
         wpi.addClassDeclarationAnnotation(typeElement, builder.build());
@@ -837,9 +843,11 @@ public class MustCallInferenceLogic {
           addEnsuresCalledMethods();
         }
 
-        if (!owningFields.isEmpty() && owningFields.size() == owningFieldToECM.size()) {
-          addOrUpdateMustCall();
-        }
+        addOrUpdateMustCall();
+
+        //        if (!owningFields.isEmpty() && owningFields.size() == owningFieldToECM.size()) {
+        //          addOrUpdateMustCall();
+        //        }
       }
       BlockWithObligations state = new BlockWithObligations(successor, obligations);
       if (visited.add(state)) {
