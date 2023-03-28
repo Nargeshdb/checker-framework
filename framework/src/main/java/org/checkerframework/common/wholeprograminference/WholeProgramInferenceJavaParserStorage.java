@@ -1556,9 +1556,9 @@ public class WholeProgramInferenceJavaParserStorage
      * nodes for that field.
      */
     public void transferAnnotations() {
-      if (type == null) {
-        return;
-      }
+      //      if (type == null) {
+      //        return;
+      //      }
 
       if (declarationAnnotations != null) {
         // Don't add directly to the type of the variable declarator,

@@ -36,7 +36,6 @@ class CreatesMustCallForTest {
     }
 
     void callMethodWithCMCF2() {
-      // :: warning: (reset.not.owning)
       initialyzeFooWithoutCMCF2();
     }
 
