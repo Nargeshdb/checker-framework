@@ -325,8 +325,9 @@ public class MustCallInferenceLogic {
     returnNode = getTempVarOrNode(returnNode);
 
     if (returnNode instanceof FieldAccessNode) {
-      if (!rTypeFactory.getMustCallValue(TreeUtils.elementFromTree(returnNode.getTree())).isEmpty()
-          || rTypeFactory.hasOwning(TreeUtils.elementFromTree(returnNode.getTree()))) {
+      Element returnTree = TreeUtils.elementFromTree(returnNode.getTree());
+      if (!rTypeFactory.getMustCallValue(returnTree).isEmpty()
+          || rTypeFactory.hasOwning(returnTree)) {
         addNotOwning(enMethodElt);
       }
     }
@@ -520,13 +521,13 @@ public class MustCallInferenceLogic {
     }
     if (((rTypeFactory.hasOwning(receiverEl) && receiverEl.getKind().isField())
         || rTypeFactory.isCandidateOwningField(receiverEl))) {
+      owningFields.add(receiverEl);
       Element method = TreeUtils.elementFromUse(mNode.getTree());
       List<String> mustCallValues = rTypeFactory.getMustCallValue(receiverEl);
       if (mustCallValues.size() == 1
           && mustCallValues.contains(method.getSimpleName().toString())) {
         // This assumes that any MustCall annotation has at most one element.
         // TODO: generalize this to MustCall annotations with more than one element.
-        owningFields.add(receiverEl);
         owningFieldToECM.add(receiverEl);
       }
     }
@@ -556,18 +557,28 @@ public class MustCallInferenceLogic {
   }
 
   private void addOrUpdateMustCall() {
-    AnnotationBuilder builder =
-        new AnnotationBuilder(rTypeFactory.getProcessingEnv(), InheritableMustCall.class);
-    String[] methodArray = new String[] {enMethodTree.getName().toString()};
-    Arrays.sort(methodArray);
-    builder.setValue("value", methodArray);
     ClassTree classTree = TreePathUtil.enclosingClass(rTypeFactory.getPath(enMethodTree));
     TypeElement typeElement = TreeUtils.elementFromDeclaration(classTree);
     if (typeElement != null
-        && rTypeFactory.getMustCallValue(typeElement).isEmpty()
+        //        && rTypeFactory.getMustCallValue(typeElement).isEmpty()
         && !enMethodTree.getModifiers().getFlags().contains(Modifier.PRIVATE)) {
       WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
-      wpi.addClassDeclarationAnnotation(typeElement, builder.build());
+      List<String> currentMustCallValues = rTypeFactory.getMustCallValue(typeElement);
+      if (currentMustCallValues.isEmpty()) {
+        AnnotationBuilder builder =
+            new AnnotationBuilder(rTypeFactory.getProcessingEnv(), InheritableMustCall.class);
+        String[] methodArray = new String[] {enMethodTree.getName().toString()};
+        Arrays.sort(methodArray);
+        builder.setValue("value", methodArray);
+        wpi.addClassDeclarationAnnotation(typeElement, builder.build());
+      } else {
+        AnnotationBuilder builder =
+            new AnnotationBuilder(rTypeFactory.getProcessingEnv(), InheritableMustCall.class);
+        String[] methodArray = new String[] {currentMustCallValues.get(0).toString()};
+        Arrays.sort(methodArray);
+        builder.setValue("value", methodArray);
+        wpi.addClassDeclarationAnnotation(typeElement, builder.build());
+      }
     }
   }
 
@@ -595,11 +606,11 @@ public class MustCallInferenceLogic {
           }
           if ((nElt.getKind().isField() && rTypeFactory.hasOwning(nElt))
               || rTypeFactory.isCandidateOwningField(nElt)) {
+            owningFields.add((VariableElement) nElt);
             JavaExpression target = JavaExpression.fromNode(n);
             if (mustCallObligationSatisfied(mNode, nElt, target)) {
               if ((rTypeFactory.hasOwning(nElt) && nElt.getKind().isField())
                   || rTypeFactory.isCandidateOwningField(nElt)) {
-                owningFields.add((VariableElement) nElt);
                 owningFieldToECM.add((VariableElement) nElt);
               }
               // TODO infer @MustCall and @EnsuresCalledMethods
@@ -611,10 +622,9 @@ public class MustCallInferenceLogic {
       if (argElt != null
           && ((rTypeFactory.hasOwning(argElt) && argElt.getKind().isField())
               || rTypeFactory.isCandidateOwningField(argElt))) {
+        owningFields.add((VariableElement) argElt);
         JavaExpression target = JavaExpression.fromNode(arg);
-
         if (mustCallObligationSatisfied(mNode, argElt, target)) {
-          owningFields.add((VariableElement) argElt);
           owningFieldToECM.add((VariableElement) argElt);
           // TODO infer @MustCall and @EnsuresCalledMethods
         }
