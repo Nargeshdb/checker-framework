@@ -152,7 +152,7 @@ public class FormatterVisitor extends BaseTypeVisitor<FormatterAnnotatedTypeFact
 
       // Support -Ainfer command-line argument.
       WholeProgramInference wpi = atypeFactory.getWholeProgramInference();
-      if (shouldPerformContractInference() && forwardsArguments(tree, enclosingMethod)) {
+      if (wpi != null && forwardsArguments(tree, enclosingMethod)) {
         wpi.addMethodDeclarationAnnotation(
             TreeUtils.elementFromDeclaration(enclosingMethod), atypeFactory.FORMATMETHOD);
       }
