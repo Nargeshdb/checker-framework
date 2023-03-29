@@ -569,7 +569,8 @@ public class MustCallInferenceLogic {
       if (typeElement.getSuperclass() != null) {
         TypeMirror superType = typeElement.getSuperclass();
         TypeElement superTypeElement = TypesUtils.getTypeElement(superType);
-        if (!rTypeFactory.getMustCallValue(superTypeElement).isEmpty()) {
+        if (superTypeElement != null
+            && !rTypeFactory.getMustCallValue(superTypeElement).isEmpty()) {
           return;
         }
       }
