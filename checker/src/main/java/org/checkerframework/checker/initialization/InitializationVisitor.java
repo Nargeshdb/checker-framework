@@ -450,7 +450,7 @@ public class InitializationVisitor<
 
     // Support -Ainfer command-line argument.
     WholeProgramInference wpi = atypeFactory.getWholeProgramInference();
-    if (wpi != null) {
+    if (shouldPerformContractInference()) {
       // For each uninitialized field, treat it as if the default value is assigned to it.
       List<VariableTree> uninitFields = new ArrayList<>(violatingFields);
       uninitFields.addAll(nonviolatingFields);
