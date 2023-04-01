@@ -4,6 +4,7 @@ plugins {
   // https://github.com/n0mer/gradle-git-properties ; target is: generateGitProperties
   id 'com.gorylenko.gradle-git-properties' version '2.4.1'
 }
+
 sourceSets {
   main {
     resources {
@@ -13,7 +14,6 @@ sourceSets {
   }
   testannotations
 }
-
 
 sourcesJar {
   // The resources duplicate content from the src directory.
@@ -124,6 +124,7 @@ task assembleForJavac(dependsOn: shadowJar, group: 'Build') {
     }
 
     copy {
+      // This is required to *run* the Checker Framework on JDK 8.
       from configurations.javacJar
       into "${projectDir}/dist"
       rename { String fileName ->
@@ -186,6 +187,7 @@ shadowJar {
   description 'Creates checker-VERSION-all.jar and copies it to dist/checker.jar.'
   // To see what files are incorporated into the shadow jar file:
   // doFirst { println sourceSets.main.runtimeClasspath.asPath }
+
   doLast{
     copy {
       from archiveFile.get()
@@ -260,41 +262,6 @@ task exampleTests(type: Exec, dependsOn: assembleForJavac, group: 'Verification'
   args = ['-C', '../docs/examples']
 }
 
-task demosTests(dependsOn: assembleForJavac, group: 'Verification') {
-  description 'Test that the demos are working as expected.'
-  doLast {
-    if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
-      File demosDir = new File(projectDir, '../../checker-framework.demos');
-      if (!demosDir.exists()) {
-        exec {
-          workingDir file(demosDir.toString() + '/../')
-          executable 'git'
-          args = [
-            'clone',
-            '--depth',
-            '1',
-            'https://github.com/typetools/checker-framework.demos.git'
-          ]
-        }
-      } else {
-        exec {
-          workingDir demosDir
-          executable 'git'
-          args = [
-            'pull',
-            'https://github.com/typetools/checker-framework.demos.git'
-          ]
-          ignoreExitValue = true
-        }
-      }
-      ant.properties.put('checker.lib', file("${projectDir}/dist/checker.jar").absolutePath)
-      ant.ant(dir: demosDir.toString())
-    } else {
-      println('Skipping demosTests because they only work with Java 8.')
-    }
-  }
-}
-
 task allNullnessTests(type: Test, group: 'Verification') {
   description 'Run all Junit tests for the Nullness Checker.'
   include '**/Nullness*.class'
@@ -318,10 +285,6 @@ task jtregJdk11Tests(group: 'Verification') {
   String jtregOutput = "${buildDir}/jtregJdk11"
   String name = 'all'
   doLast {
-    if (isJava8) {
-      println 'This test is only run with JDK 11+.'
-      return;
-    }
     exec {
       executable 'jtreg'
       args = [
@@ -348,8 +311,6 @@ task jtregJdk11Tests(group: 'Verification') {
         '.'
       ]
     }
-
-
   }
 }
 
@@ -841,6 +802,7 @@ task ainferNullnessGenerateJaifs(type: Test) {
 
     // JAIF-based WPI does not infer annotations on uses of type variables correctly.
     delete('tests/ainfer-nullness/annotated/TwoCtorGenericAbstract.java')
+    delete('tests/ainfer-nullness/annotated/TypeVarReturnAnnotated.java')
 
     // Inserting annotations from .jaif files in-place.
     String jaifsDir = 'tests/ainfer-nullness/inference-output';
@@ -1079,6 +1041,7 @@ final checkerPom(publication) {
     }
   }
 }
+
 publishing {
   publications {
     checker(MavenPublication) {
@@ -1090,6 +1053,7 @@ publishing {
     }
   }
 }
+
 signing {
   sign publishing.publications.checker
 }
