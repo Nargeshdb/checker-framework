@@ -218,7 +218,14 @@ public class MustCallInferenceLogic {
         }
       } else {
         if (rTypeFactory.hasMustCallAlias(paramElement)) {
-          addMustCallAlias(enMethodElt, i);
+          if (!TreeUtils.isConstructor(enMethodTree)) {
+            addMustCallAlias(enMethodElt, i);
+          } else if (TreeUtils.isConstructor(enMethodTree)
+              && getEnclosedOwningFields().size() <= 1) {
+            addMustCallAlias(enMethodElt, i);
+          } else {
+            addOwningOnParams(enMethodElt, i);
+          }
         } else if (paramElement.getAnnotation(Owning.class) != null) {
           addOwningOnParams(enMethodElt, i);
         }
@@ -362,6 +369,9 @@ public class MustCallInferenceLogic {
         enOwningFields.add((VariableElement) memberElt);
       }
     }
+    for (Element memberElt : owningFields) {
+      enOwningFields.add((VariableElement) memberElt);
+    }
     return enOwningFields;
   }
 
@@ -392,11 +402,10 @@ public class MustCallInferenceLogic {
         for (ResourceAlias rl : rhsAliases) {
           Element rhdElt = rl.reference.getElement();
           List<? extends VariableTree> params = enMethodTree.getParameters();
-          Set<VariableElement> enOwningFields = getEnclosedOwningFields();
           for (int i = 0; i < params.size(); i++) {
             VariableElement paramElt = TreeUtils.elementFromDeclaration(params.get(i));
             if (paramElt.equals(rhdElt)) {
-              if (enOwningFields.size() == 1) {
+              if (getEnclosedOwningFields().size() == 1) {
                 addMustCallAlias(enMethodElt, i);
               } else {
                 addOwningOnParams(enMethodElt, i);
@@ -516,20 +525,23 @@ public class MustCallInferenceLogic {
     return node;
   }
 
-  private void isOwningField(VariableElement receiverEl, MethodInvocationNode mNode) {
-    if (receiverEl == null) {
+  private void isOwningField(@Nullable Node node, MethodInvocationNode mNode) {
+    if (node == null) {
       return;
     }
-    if (((rTypeFactory.hasOwning(receiverEl) && receiverEl.getKind().isField())
-        || rTypeFactory.isCandidateOwningField(receiverEl))) {
-      owningFields.add(receiverEl);
-      Element method = TreeUtils.elementFromUse(mNode.getTree());
-      List<String> mustCallValues = rTypeFactory.getMustCallValue(receiverEl);
-      if (mustCallValues.size() == 1
-          && mustCallValues.contains(method.getSimpleName().toString())) {
+    Element nodeElt = TreeUtils.elementFromTree(node.getTree());
+    if (nodeElt == null) {
+      return;
+    }
+    if (((rTypeFactory.hasOwning(nodeElt) && nodeElt.getKind().isField())
+        || rTypeFactory.isCandidateOwningField(nodeElt))) {
+      node = NodeUtils.removeCasts(node);
+      JavaExpression target = JavaExpression.fromNode(node);
+      if (mustCallObligationSatisfied(mNode, nodeElt, target)) {
         // This assumes that any MustCall annotation has at most one element.
         // TODO: generalize this to MustCall annotations with more than one element.
-        owningFieldToECM.add(receiverEl);
+        owningFields.add((VariableElement) nodeElt);
+        owningFieldToECM.add((VariableElement) nodeElt);
       }
     }
   }
@@ -584,9 +596,7 @@ public class MustCallInferenceLogic {
     }
 
     if (!enMethodTree.getModifiers().getFlags().contains(Modifier.PRIVATE)) {
-      if (!owningFields.isEmpty()
-          && owningFieldToECM.size() == owningFields.size()
-          && owningFields.size() >= getEnclosedOwningFields().size()) {
+      if (!owningFields.isEmpty() && owningFieldToECM.size() == getEnclosedOwningFields().size()) {
         AnnotationBuilder builder =
             new AnnotationBuilder(rTypeFactory.getProcessingEnv(), InheritableMustCall.class);
         String[] methodArray = new String[] {enMethodTree.getName().toString()};
@@ -621,28 +631,13 @@ public class MustCallInferenceLogic {
           }
           if ((nElt.getKind().isField() && rTypeFactory.hasOwning(nElt))
               || rTypeFactory.isCandidateOwningField(nElt)) {
-            owningFields.add((VariableElement) nElt);
-            JavaExpression target = JavaExpression.fromNode(n);
-            if (mustCallObligationSatisfied(mNode, nElt, target)) {
-              if ((rTypeFactory.hasOwning(nElt) && nElt.getKind().isField())
-                  || rTypeFactory.isCandidateOwningField(nElt)) {
-                owningFieldToECM.add((VariableElement) nElt);
-              }
-              // TODO infer @MustCall and @EnsuresCalledMethods
-            }
+            isOwningField(n, mNode);
           }
         }
-      }
-
-      if (argElt != null
+      } else if (argElt != null
           && ((rTypeFactory.hasOwning(argElt) && argElt.getKind().isField())
               || rTypeFactory.isCandidateOwningField(argElt))) {
-        owningFields.add((VariableElement) argElt);
-        JavaExpression target = JavaExpression.fromNode(arg);
-        if (mustCallObligationSatisfied(mNode, argElt, target)) {
-          owningFieldToECM.add((VariableElement) argElt);
-          // TODO infer @MustCall and @EnsuresCalledMethods
-        }
+        isOwningField(arg, mNode);
       }
 
       if (!rTypeFactory.hasMustCallAlias(parameters.get(i))
@@ -738,9 +733,9 @@ public class MustCallInferenceLogic {
 
     Element receiverEl = TreeUtils.elementFromTree(receiver.getTree());
     if (receiverEl != null
-        && (rTypeFactory.hasOwning(receiverEl)
+        && ((receiverEl.getKind().isField() && rTypeFactory.hasOwning(receiverEl))
             || rTypeFactory.isCandidateOwningField(receiverEl))) {
-      isOwningField((VariableElement) receiverEl, mNode);
+      isOwningField(receiver, mNode);
     }
 
     Node receiverTmpVar = getTempVarOrNode(receiver);
@@ -845,7 +840,7 @@ public class MustCallInferenceLogic {
         WholeProgramInference wpi = rTypeFactory.getWholeProgramInference();
 
         assert wpi != null : "MustCallInference is running without WPI.";
-        for (VariableElement fieldElt : owningFields) {
+        for (VariableElement fieldElt : getEnclosedOwningFields()) {
           wpi.addFieldDeclarationAnnotation(fieldElt, OWNING);
         }
         if (!owningFieldToECM.isEmpty()) {

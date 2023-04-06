@@ -27,7 +27,7 @@ public class AinferResourceLeakAjavaTest extends AinferGeneratePerDirectoryTest 
         ResourceLeakChecker.class,
         "ainfer-resourceleak/non-annotated",
         "-Ainfer=ajava",
-        "-Aajava=tests/ainfer-resourceleak/input-annotation-files/",
+        //        "-Aajava=tests/ainfer-resourceleak/input-annotation-files/",
         "-Awarns");
   }
 
