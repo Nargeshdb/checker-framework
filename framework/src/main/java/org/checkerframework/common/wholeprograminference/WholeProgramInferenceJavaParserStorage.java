@@ -256,14 +256,6 @@ public class WholeProgramInferenceJavaParserStorage
     return methodAnnos.getReturnType(atm, atypeFactory);
   }
 
-  public @Nullable AnnotationMirrorSet getClassAnnotaions(String className) {
-    ClassOrInterfaceAnnos classAnnos = classToAnnos.get(className);
-    if (classAnnos == null) {
-      return null;
-    }
-    return classAnnos.getClassDeclAnnotations();
-  }
-
   @Override
   public @Nullable AnnotatedTypeMirror getFieldAnnotations(
       Element element,
@@ -1086,10 +1078,6 @@ public class WholeProgramInferenceJavaParserStorage
      */
     public ClassOrInterfaceAnnos(@Nullable TypeDeclaration<?> javaParserNode) {
       classDeclaration = javaParserNode;
-    }
-
-    protected @Nullable AnnotationMirrorSet getClassDeclAnnotations() {
-      return classAnnotations;
     }
 
     /**
