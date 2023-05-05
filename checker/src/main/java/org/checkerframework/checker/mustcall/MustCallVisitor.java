@@ -74,6 +74,9 @@ public class MustCallVisitor extends BaseTypeVisitor<MustCallAnnotatedTypeFactor
     return super.visitReturn(tree, p);
   }
 
+  /** An empty string list. */
+  private static final List<String> emptyStringList = Collections.emptyList();
+
   @Override
   protected boolean validateType(Tree tree, AnnotatedTypeMirror type) {
     if (TreeUtils.isClassTree(tree)) {
@@ -115,7 +118,8 @@ public class MustCallVisitor extends BaseTypeVisitor<MustCallAnnotatedTypeFactor
               AnnotationUtils.getElementValueArray(
                   anyInheritableMustCall,
                   atypeFactory.inheritableMustCallValueElement,
-                  String.class);
+                  String.class,
+                  emptyStringList);
           AnnotationMirror inheritedMCAnno = atypeFactory.createMustCall(inheritableMustCallVal);
 
           // Issue an error if there is an inconsistent, user-written @MustCall annotation
@@ -166,8 +170,8 @@ public class MustCallVisitor extends BaseTypeVisitor<MustCallAnnotatedTypeFactor
                   tree,
                   "inconsistent.mustcall.subtype",
                   ElementUtils.getQualifiedName(classEle),
-                  inheritedMCAnno,
-                  effectiveMCAnno);
+                  effectiveMCAnno,
+                  inheritedMCAnno);
               return false;
             }
           }

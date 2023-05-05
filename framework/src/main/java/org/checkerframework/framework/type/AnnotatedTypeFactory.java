@@ -1832,7 +1832,7 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
         AnnotationUtils.getElementValueClassNames(fieldInvarAnno, fieldInvariantQualifierElement);
     List<AnnotationMirror> qualifiers =
         CollectionsPlume.mapList(
-            (Name name) ->
+            name ->
                 // Calling AnnotationBuilder.fromName (which ignores
                 // elements/fields) is acceptable because @FieldInvariant
                 // does not handle classes with elements/fields.
@@ -5587,7 +5587,7 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
    *
    * @param methodAnnos the method or constructor annotations to modify
    */
-  public void prepareMethodForWriting(AMethod methodAnnos) {
+  public void wpiPrepareMethodForWriting(AMethod methodAnnos) {
     // This implementation does nothing.
   }
 
@@ -5596,9 +5596,15 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
    * to an ajava file.
    *
    * @param methodAnnos the method or constructor annotations to modify
+   * @param inSupertypes the method or constructor annotations for all overridden methods; not
+   *     side-effected
+   * @param inSubtypes the method or constructor annotations for all overriding methods; not
+   *     side-effected
    */
-  public void prepareMethodForWriting(
-      WholeProgramInferenceJavaParserStorage.CallableDeclarationAnnos methodAnnos) {
+  public void wpiPrepareMethodForWriting(
+      WholeProgramInferenceJavaParserStorage.CallableDeclarationAnnos methodAnnos,
+      Collection<WholeProgramInferenceJavaParserStorage.CallableDeclarationAnnos> inSupertypes,
+      Collection<WholeProgramInferenceJavaParserStorage.CallableDeclarationAnnos> inSubtypes) {
     // This implementation does nothing.
   }
 
