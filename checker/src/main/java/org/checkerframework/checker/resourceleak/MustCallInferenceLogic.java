@@ -59,7 +59,7 @@ public class MustCallInferenceLogic {
   /** The set of owning fields. */
   private Set<VariableElement> owningFields = new HashSet<>();
 
-  private Set<VariableElement> owningFieldToECM = new HashSet<>();
+  private Set<VariableElement> owningFieldToECM = new LinkedHashSet<>();
 
   /** The control flow graph. */
   private final ControlFlowGraph cfg;
