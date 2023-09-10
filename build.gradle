@@ -45,7 +45,7 @@ ext {
   afu = "${annotationTools}/annotation-file-utilities"
 
   stubparser = "${parentDir}/stubparser"
-  stubparserJar = "${stubparser}/javaparser-core/target/stubparser-3.25.3.jar"
+  stubparserJar = "${stubparser}/javaparser-core/target/stubparser-3.25.5.jar"
 
   plumeScriptsHome = "${project(':checker').projectDir}/bin-devel/.plume-scripts"
   htmlToolsHome = "${project(':checker').projectDir}/bin-devel/.html-tools"
